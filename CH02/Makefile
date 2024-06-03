@@ -1,15 +1,23 @@
-TARGET = asm_exe.elf
-OBJDIR = obj
+TARGET   = asm.elf
+OBJDIR   = obj
 
-CFILES   = $(wildcard *.c)
 ASMFILES = $(wildcard *.s)
-OBJS     = $(CFILES) $(ASMFILES)
+CFILES   = $(wildcard *.c)
+OBJFILES = $(patsubst %, $(OBJDIR)/%, $(CFILES:.c=.o) $(ASMFILES:.s=.o))
 
 # Builds
-$(TARGET) : $(OBJS)
-	gcc $(OBJS) -o $@
+$(shell mkdir -p $(OBJDIR))
 
-.PHONY:	clean debug
+$(TARGET) : $(OBJFILES)
+	gcc $(OBJFILES) -o $@
+
+$(OBJDIR)/%.o: %.c
+	gcc -c $< -o $@
+
+$(OBJDIR)/%.o: %.s
+	gcc -c $< -o $@
+
+.PHONY:	clean
 
 clean:
 	rm -f $(TARGET)
