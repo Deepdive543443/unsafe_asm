@@ -2,7 +2,6 @@
                 .global calc_sum_asm
 // int calc_sum_asm(int *nums, int n); (r2: current idx, r3: current addr, r4: current val, r5: current sum, r6: sizeof(int))
 calc_sum_asm:   push    {r4-r6}
-                sub     r1,r1,#1
                 mov     r2,#0
                 mov     r3,#0
                 mov     r4,#0       
@@ -15,7 +14,7 @@ loop:           mul     r3,r2,r6
                 
                 add     r2,r2,#1
                 cmp     r2,r1
-                ble     loop            // Update index, check if index <= (n - 1)
+                blt     loop            // Update index, check if index <= (n - 1)
                                         // Jump back to loop if 
                 mov     r0,r5
                 pop     {r4-r6}
