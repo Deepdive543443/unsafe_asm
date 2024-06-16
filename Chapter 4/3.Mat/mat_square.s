@@ -5,12 +5,12 @@ mat_square_asm: push    {r4-r7}
                 mov     r6,#0
 
                 mov     r4,#0               // int i = 0
-loop_w:         cmp     r4,r2               // i < width
-                bge     fin   
+loop_w:         cmp     r4,r3          
+                bge     fin                 // i < height
 
                 mov     r5,#0               // int j = 0
-loop_h:         cmp     r5,r3
-                addge   r4,#1               // j >= height
+loop_h:         cmp     r5,r2
+                addge   r4,#1               // j >= width
                 bge     loop_w
 
                 mul     r6,r2,r4            // r6  = i * width
@@ -20,7 +20,7 @@ loop_h:         cmp     r5,r3
                 str     r7,[r0,r6,lsl #2]   // dst_mat[r6] = r7
 
                 add     r5,#1               // j++
-                blt     loop_h
+                bal     loop_h              // Using 'bl' here gaves an Segmentation fault
 
 fin:            pop     {r4-r7}
                 bx      lr
