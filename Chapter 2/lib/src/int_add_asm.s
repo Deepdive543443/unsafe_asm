@@ -1,6 +1,7 @@
             .text
-            .global asm_int_Add_
-asm_int_Add_:
+            .global int_add_asm
+//  int int_add_asm(int a, int b, int c);
+int_add_asm:
 
 /*  In this example, GNU C compiler loads functions args into
     r0, r1, r2, ... , etc. (r0, r1, r2 in our case of three args)   */

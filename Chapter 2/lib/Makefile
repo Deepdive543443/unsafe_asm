@@ -1,0 +1,36 @@
+TARGET = asm_impl
+SRCDIR = src
+INCDIR = include
+OBJDIR = obj
+OUTDIR = out
+
+ASMFILES = $(shell ls $(SRCDIR))
+OBJFILES = $(patsubst %, $(OBJDIR)/%, $(ASMFILES:.s=.o))
+ASMFLAGS = -march=armv8-a+simd
+
+# Builds
+$(shell mkdir -p $(OBJDIR))
+
+$(TARGET) : $(OBJFILES)
+	ar -rcs $(OBJDIR)/lib$@.a $(OBJFILES)
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.s
+	as $(ASMFLAGS) $< -o $@
+
+.PHONY:	clean
+
+install:
+	$(shell mkdir -p $(OUTDIR))
+	cp $(OBJDIR)/lib$(TARGET).a $(OUTDIR)
+	cp $(INCDIR)/*.h $(OUTDIR)
+
+debug:
+	@echo "lib$(TARGET).a"
+	@echo $(shell ls $(SRCDIR)/*.s)
+	@echo $(ASMFILES)
+	@echo $(OBJFILES)
+
+clean:
+	rm -f $(TARGET)
+	rm -rf $(OBJDIR)
+	rm -rf $(OUTDIR)

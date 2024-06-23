@@ -1,25 +1,22 @@
-TARGET   = asm.elf
-OBJDIR   = obj
+TARGET = asm.elf
+OBJDIR = obj
+LIBDIR = ../lib/out
 
-ASMFILES = $(wildcard *.s)
 CFILES   = $(wildcard *.c)
 CPPFILES = $(wildcard *.cpp)
-OBJFILES = $(patsubst %, $(OBJDIR)/%, $(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(ASMFILES:.s=.o))
+OBJFILES = $(patsubst %, $(OBJDIR)/%, $(CFILES:.c=.o) $(CPPFILES:.cpp=.o))
 
 # Builds
 $(shell mkdir -p $(OBJDIR))
 
 $(TARGET) : $(OBJFILES)
-	g++ $(OBJFILES) -o $@
+	g++ $(OBJFILES) -L$(LIBDIR) -lasm_impl -I$(LIBDIR) -o $@
 
 $(OBJDIR)/%.o: %.cpp
-	g++ -c $< -o $@
+	g++ -c $< -L$(LIBDIR) -lasm_impl -I$(LIBDIR) -o $@
 
 $(OBJDIR)/%.o: %.c
-	gcc -c $< -o $@
-
-$(OBJDIR)/%.o: %.s
-	gcc -c $< -o $@
+	gcc -c $< -L$(LIBDIR) -lasm_impl -I$(LIBDIR) -o $@
 
 .PHONY:	clean
 

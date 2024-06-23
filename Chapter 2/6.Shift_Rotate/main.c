@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-int MovRegA(unsigned int a, unsigned int *b);
-int MovRegB(unsigned int a, unsigned int *b);
+#include "asm_impl.h"
 
 void print_byte_as_bits(char val)
 {

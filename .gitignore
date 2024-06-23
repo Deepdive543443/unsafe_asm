@@ -1,2 +1,4 @@
 *.elf
 obj
+target
+out

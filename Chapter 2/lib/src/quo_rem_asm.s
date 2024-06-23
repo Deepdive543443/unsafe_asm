@@ -1,7 +1,7 @@
             .text
-            .global asm_quo_rem
-
-asm_quo_rem:
+            .global quo_rem_asm
+//  void quo_rem_asm(const int *a, const int *b, int *quo, int *rem);
+quo_rem_asm:
             push {r4,r5}
 
 // Load a and b

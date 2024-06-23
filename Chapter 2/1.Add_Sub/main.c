@@ -1,11 +1,14 @@
 #include <stdio.h>
-
-int asm_int_Add_(int a, int b, int c);
+#include <stdlib.h>
+#include "asm_impl.h"
 
 int main(int argc, char **argv)
 {
-    printf("Result: %d\n", asm_int_Add_(3, 12, 10));
-    printf("Result: %d\n", asm_int_Add_(4, 1, 6));
-    printf("Result: %d\n", asm_int_Add_(114, 514, 1919));
+    int x, add, sub;
+    x   = argc > 1 ? atoi(argv[1]) : 114;
+    add = argc > 2 ? atoi(argv[2]) : 514;
+    sub = argc > 3 ? atoi(argv[3]) : 1919;
+
+    printf("Result C: %d ASM: %d\n", x + add - sub, int_add_asm(x, add, sub));
     return 0;
 }

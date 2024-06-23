@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
-void bit_ops_16(uint16_t a, uint16_t b, uint16_t *result);
+#include "asm_impl.h"
 
 void print_byte_as_bits(char val)
 {
