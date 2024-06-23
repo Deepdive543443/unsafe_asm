@@ -4,7 +4,6 @@ OBJDIR = obj
 INCDIR = include
 OUTDIR = out
 
-
 ASMFILES = $(shell ls $(SRCDIR))
 OBJFILES = $(OBJDIR)/$(ASMFILES:.s=.o)
 ASMFLAGS = -march=armv8-a+simd
