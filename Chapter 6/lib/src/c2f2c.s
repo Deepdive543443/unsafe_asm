@@ -17,4 +17,3 @@ fahrenheit_2c_asm:  vldr.f32    s1,shift_const
                     vmul.f32    s0,s2
                     vadd.f32    s0,s1
                     bx          lr
-

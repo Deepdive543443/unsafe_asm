@@ -1,11 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "c6.h"
 
 #define C2F(c) ((c - 32) * 0.55555556)
 #define F2C(c) ((c * 1.8) + 32)
-
-float celcius_2f_asm(float celcius);
-float fahrenheit_2c_asm(float fahrenheit);
 
 int main(int argc, char **argv)
 {
