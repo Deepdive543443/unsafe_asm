@@ -1,21 +1,18 @@
-TARGET = asm.elf
-OBJDIR = obj
-LIBDIR = ../lib/out
+TARGET   = asm.elf
+OBJDIR   = obj
+LIBDIR   = ../lib/out
+LIBNAME  = c2
 
-CFILES   = $(wildcard *.c)
-OBJFILES = $(patsubst %, $(OBJDIR)/%, $(CFILES:.c=.o) $(ASMFILES:.s=.o))
+RSTFILES = $(wildcard *.rs)
+LINKFLAG = -l static=$(LIBNAME) -L $(LIBDIR)
 
-# Builds
-$(shell mkdir -p $(OBJDIR))
-
-$(TARGET) : $(OBJFILES)
-	gcc $(OBJFILES) -L$(LIBDIR) -lasm_impl -I$(LIBDIR) -o $@
-
-$(OBJDIR)/%.o: %.c
-	gcc -c $< -L$(LIBDIR) -lasm_impl -I$(LIBDIR) -o $@
+$(TARGET) : $(RSTFILES)
+	rustc $(LINKFLAG) $< -o $@
 
 .PHONY:	clean
 
+.PRECIOUS: obj/%.s
+
 clean:
-	rm -f $(TARGET)
+	rm -f *elf
 	rm -rf $(OBJDIR)

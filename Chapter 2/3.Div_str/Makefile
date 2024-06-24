@@ -1,7 +1,7 @@
 TARGET   = asm.elf
 OBJDIR   = obj
 LIBDIR   = ../lib/out
-LIBNAME  = c1
+LIBNAME  = c2
 
 RSTFILES = $(wildcard *.rs)
 LINKFLAG = -l static=$(LIBNAME) -L $(LIBDIR)

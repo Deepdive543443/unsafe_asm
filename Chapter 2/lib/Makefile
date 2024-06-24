@@ -1,4 +1,4 @@
-TARGET = asm_impl
+TARGET = c2
 SRCDIR = src
 INCDIR = include
 OBJDIR = obj
@@ -17,18 +17,12 @@ $(TARGET) : $(OBJFILES)
 $(OBJDIR)/%.o: $(SRCDIR)/%.s
 	as $(ASMFLAGS) $< -o $@
 
-.PHONY:	clean
+.PHONY: clean
 
 install:
 	$(shell mkdir -p $(OUTDIR))
 	cp $(OBJDIR)/lib$(TARGET).a $(OUTDIR)
 	cp $(INCDIR)/*.h $(OUTDIR)
-
-debug:
-	@echo "lib$(TARGET).a"
-	@echo $(shell ls $(SRCDIR)/*.s)
-	@echo $(ASMFILES)
-	@echo $(OBJFILES)
 
 clean:
 	rm -f $(TARGET)

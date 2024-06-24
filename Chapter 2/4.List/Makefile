@@ -1,37 +1,18 @@
 TARGET   = asm.elf
 OBJDIR   = obj
+LIBDIR   = ../lib/out
+LIBNAME  = c2
 
-ASMFILES = $(wildcard *.s)
-CFILES   = $(wildcard *.c)
-CPPFILES = $(wildcard *.cpp)
-OBJFILES = $(patsubst %, $(OBJDIR)/%, $(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(ASMFILES:.s=.o))
+RSTFILES = $(wildcard *.rs)
+LINKFLAG = -l static=$(LIBNAME) -L $(LIBDIR)
 
-CFLAGS   = -march=armv8-a+simd -O3 -Wall
-CPPFLAGS = $(CFLAGS) -std=c++14
-ASMFLAGS = -march=armv8-a+simd
-
-# Builds
-$(shell mkdir -p $(OBJDIR))
-
-$(TARGET) : $(OBJFILES)
-	g++ $(CPPFLAGS) $(OBJFILES) -o $@
-
-$(OBJDIR)/%.o: %.s
-	as $(ASMFLAGS) $< -o $@
-
-$(OBJDIR)/%.o: $(OBJDIR)/%.s
-	as $(ASMFLAGS) $< -o $@
-
-$(OBJDIR)/%.s: %.cpp
-	g++ $(CPPFLAGS) -S $< -o $(OBJDIR)/$(<:.cpp=.s)
-
-$(OBJDIR)/%.s: %.c
-	gcc $(CFLAGS) -S $< -o $(OBJDIR)/$(<:.c=.s)
+$(TARGET) : $(RSTFILES)
+	rustc $(LINKFLAG) $< -o $@
 
 .PHONY:	clean
 
 .PRECIOUS: obj/%.s
 
 clean:
-	rm -f $(TARGET)
+	rm -f *elf
 	rm -rf $(OBJDIR)
