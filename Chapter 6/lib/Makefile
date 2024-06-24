@@ -1,33 +1,28 @@
 TARGET = c6
 SRCDIR = src
-OBJDIR = obj
 INCDIR = include
+OBJDIR = obj
 OUTDIR = out
 
 ASMFILES = $(shell ls $(SRCDIR))
-OBJFILES = $(OBJDIR)/$(ASMFILES:.s=.o)
+OBJFILES = $(patsubst %, $(OBJDIR)/%, $(ASMFILES:.s=.o))
 ASMFLAGS = -march=armv8-a+simd
 
+# Builds
 $(shell mkdir -p $(OBJDIR))
 
 $(TARGET) : $(OBJFILES)
-	ar -rcs $(OBJDIR)/lib$@.a $<
+	ar -rcs $(OBJDIR)/lib$@.a $(OBJFILES)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.s
 	as $(ASMFLAGS) $< -o $@
 
-.PHONY:	clean
-
-.PRECIOUS: obj/%.s
+.PHONY: clean
 
 install:
 	$(shell mkdir -p $(OUTDIR))
 	cp $(OBJDIR)/lib$(TARGET).a $(OUTDIR)
 	cp $(INCDIR)/*.h $(OUTDIR)
-
-debug:
-	@echo $(ASMFILES)
-	@echo $(OBJFILES)
 
 clean:
 	rm -f $(TARGET)

@@ -1,6 +1,10 @@
 use std::env;
 use std::f64;
 
+extern "C" {
+    fn distance_64_asm(x1: f64, y1: f64, z1: f64, x2: f64, y2: f64, z2: f64) -> f64;
+}
+
 fn distance(x1: f64, y1: f64, z1: f64, x2: f64, y2: f64, z2: f64) -> f64 {
     let dis_x: f64 = (x2 - x1) * (x2 - x1);
     let dis_y: f64 = (y2 - y1) * (y2 - y1);
@@ -17,5 +21,8 @@ fn main() {
     let y2 :f64 = if args.len() > 5 {args[5].parse::<f64>().unwrap()} else {114.514};
     let z2 :f64 = if args.len() > 6 {args[6].parse::<f64>().unwrap()} else {1919.810};
 
-    println!("Rust: {:>6.4}",distance(x1, y1, z1, x2, y2, z2));
+    println!("Safe:   {:>6.4}",distance(x1, y1, z1, x2, y2, z2));
+    unsafe {
+        println!("Unsafe: {:>6.4}", distance_64_asm(x1, y1, z1, x2, y2, z2));
+    };
 }
