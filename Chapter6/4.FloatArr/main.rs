@@ -1,5 +1,19 @@
 use std::env;
 
+extern "C" {
+    fn double_stddev(arr: &f64, size: i32, mean: &mut f64, std: &mut f64);
+}
+
+fn f64_stddev_unsafe(arr: Vec<f64>) -> (f64, f64) {
+    let mut mean: f64 = 0.0;
+    let mut std:  f64 = 0.0;
+    unsafe {
+        double_stddev(&arr[0], arr.len() as i32, &mut mean, &mut std);
+    }
+    return (mean, std);
+} 
+
+
 fn f64_stddev(arr: Vec<f64>) -> (f64, f64) {
     let mut mean: f64 = 0.0;
     let mut std : f64 = 0.0;
@@ -26,6 +40,9 @@ fn main() {
         float_vec.push(args[i].parse::<f64>().unwrap());
     }
     
-    let result = f64_stddev(float_vec);
+    let mut result = f64_stddev(float_vec.clone());
+    println!("{} {}",result.0, result.1);
+
+    result = f64_stddev_unsafe(float_vec);
     println!("{} {}",result.0, result.1);
 }
