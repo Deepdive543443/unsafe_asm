@@ -1,7 +1,8 @@
                 .text
 zero_double:    .double 0.0
-                .global double_stddev
+
 //  void double_stddev(double *arr, int size, double *mean, double *std);
+                .global double_stddev
 double_stddev:  push            {r4,r5}
                 cmp             r1,#0
                 ble             fin     // size > 0
@@ -27,7 +28,7 @@ mean_loop:      vldmia          r5!,{d2}
                 mov             r5,r0
 stddev_loop:    vldmia          r5!,{d2}
                 vsub.f64        d3,d0,d2            // d3 = mean - arr[idx]
-                vfma.f64        d1,d3,d3            // d1 = d3 * d3
+                vfma.f64        d1,d3,d3            // d1 += d3 * d3
 
                 add             r4,#1
                 cmp             r4,r1
@@ -37,8 +38,7 @@ stddev_loop:    vldmia          r5!,{d2}
                 vcvt.f64.s32    d3,s5
                 vdiv.f64        d1,d1,d3
                 vsqrt.f64       d1,d1
-                vstr.f64        d1,[r3]             // mean /= size
-
+                vstr.f64        d1,[r3]             // d1 /= size
 
 fin:            pop             {r4,r5}
                 bx              lr
