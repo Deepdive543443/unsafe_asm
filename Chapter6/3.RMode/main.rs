@@ -20,6 +20,6 @@ fn print_result(x: f64) {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let input = if args.len() > 1 {args[1].parse::<f64>().unwrap()} else {0.5}; 
+    let input: f64 = if args.len() > 1 {args[1].parse().unwrap()} else {0.5}; 
     print_result(input);
 }

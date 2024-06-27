@@ -10,10 +10,10 @@ ASMFLAGS = -march=armv8-a+simd
 
 # Builds
 $(shell mkdir -p $(OBJDIR))
-
 $(TARGET) : $(OBJFILES)
 	ar -rcs $(OBJDIR)/lib$@.a $(OBJFILES)
-
+	@echo "\033[92mBuild lib$(TARGET) \033[0m"
+	
 $(OBJDIR)/%.o: $(SRCDIR)/%.s
 	as $(ASMFLAGS) $< -o $@
 

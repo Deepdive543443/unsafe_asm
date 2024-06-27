@@ -14,8 +14,8 @@ fn f2c(fahrenheit: f32) -> f32 {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let celcius    :f32 = if args.len() > 1 {args[1].parse::<f32>().unwrap()} else {114.514};
-    let fahrenheit :f32 = if args.len() > 2 {args[2].parse::<f32>().unwrap()} else {1919.810};
+    let celcius    :f32 = if args.len() > 1 {args[1].parse().unwrap()} else {114.514};
+    let fahrenheit :f32 = if args.len() > 2 {args[2].parse().unwrap()} else {1919.810};
     println!("Rust: {:>6.4} {:>6.4}",c2f(celcius), f2c(fahrenheit));
     unsafe {
         println!("ASM:  {:>6.4} {:>6.4}",celcius_2f_asm(celcius), fahrenheit_2c_asm(fahrenheit));

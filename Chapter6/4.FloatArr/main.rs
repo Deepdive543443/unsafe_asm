@@ -37,12 +37,12 @@ fn main() {
     let mut float_vec: Vec<f64> = Vec::new();
 
     for i in 1..args.len() {
-        float_vec.push(args[i].parse::<f64>().unwrap());
+        float_vec.push(args[i].parse().expect("Float num"));
     }
     
-    let mut result = f64_stddev(float_vec.clone());
-    println!("{} {}",result.0, result.1);
+    let (mean, std) = f64_stddev(float_vec.clone());
+    println!("{} {}",mean, std);
 
-    result = f64_stddev_unsafe(float_vec);
-    println!("{} {}",result.0, result.1);
+    let (mean, std) = f64_stddev_unsafe(float_vec);
+    println!("{} {}",mean, std);
 }
