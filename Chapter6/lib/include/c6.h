@@ -13,7 +13,8 @@ int  getRMode();
 void setRMode(int mode);
 int  f64_2i32(double x);
 
-void double_stddev(double *arr, int size, double *mean, double *std);
+void  double_stddev(double *arr, int size, double *mean, double *std);
+float getVal(float *src_mat, int i, int j, int w);
 
 #ifdef __cplusplus
 }
