@@ -1,0 +1,2 @@
+[build]
+rustflags = "-l static=c7 -L /home/qfeng10/projects/arm_asm_example/Chapter7/lib/out"

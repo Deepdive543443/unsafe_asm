@@ -4,7 +4,7 @@
                 .global getVal
 getVal:         mul         r1,r1,r3        // i *= w;
                 add         r1,r1,r2        // i += j;
-                add         r0,r0,r1,lsl #2 // *src_mat += (i << 4);
+                add         r0,r0,r1,lsl #2 // *src_mat += (i << 2);
 
                 vldr.f32    s0,[r0]
                 bx          lr
