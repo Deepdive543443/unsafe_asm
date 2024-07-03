@@ -1,3 +1,6 @@
+//  This wasn't a successful attempt on SIMD computation. The output 
+//  didn't completely align with the ground truth output
+
                 .text 
 zero_single:    .single 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
@@ -25,7 +28,7 @@ loop_f32x4:     cmp         r3,r4           // Check if we need to jump to scale
                 vadd.f32    q0,q0,q1
                 add         r3,#1
                 add         r2,#16          // Moving 4 data forward
-                bal         loop_f32x4
+                b           loop_f32x4
 
 pre_loop_f32:   mov         r3,#0           // Reset index
                 vadd.f32    d0,d0,d1        // Sum the content of Q0
@@ -36,7 +39,7 @@ loop_f32:       cmp         r3,r5
                 vadd.f32    s0,s0,s1
                 add         r3,#1           // Update idx
                 add         r2,#4           // Update pointer
-                bal         loop_f32
+                b           loop_f32
 
 fin_f32:        pop         {r4,r5}
                 bx          lr
@@ -66,7 +69,7 @@ loop_u16x8:     cmp         r3,r4
                 vadd.u16    q0,q0,q1
                 add         r3,#1
                 add         r2,#16
-                bal         loop_u16x8
+                b           loop_u16x8
 
 pre_loop_u16:   mov         r3,#0
                 vadd.u16    d0,d0,d1
@@ -87,7 +90,7 @@ loop_u16:       cmp         r3,r5
                 add         r0,r0,r4
                 add         r3,#1           // Update idx
                 add         r2,#2           // Update pointer
-                bal         loop_u16
+                b           loop_u16
 
 fin_u16:        add         sp,#8
                 pop         {r4,r5}
