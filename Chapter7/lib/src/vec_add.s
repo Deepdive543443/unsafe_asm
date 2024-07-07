@@ -1,5 +1,6 @@
-//  This wasn't a successful attempt on SIMD computation. The output 
-//  didn't completely align with the ground truth output
+//  The implementations below appear to have some misalign  
+//  with the ground truth results. Not an very successful approuch
+//  Waiting for debugging in future
 
                 .text 
 zero_single:    .single 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
