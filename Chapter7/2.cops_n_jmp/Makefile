@@ -1,4 +1,4 @@
-TARGET   = cmp_jmp
+TARGET   = vec_add
 LIBNAME  = c7
 
 all: $(TARGET) 
@@ -9,7 +9,7 @@ $(TARGET) : lib$(LIBNAME).a
 
 lib$(LIBNAME).a :
 	make -C ../lib
-	make -C ../lib install 
+	make -C ../lib install
 	@echo "\033[92mTarget lib$(LIBNAME) builded\033[0m"
 
 .PHONY:	clean
