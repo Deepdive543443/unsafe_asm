@@ -16,9 +16,9 @@ cvtEnum:        .word   F32_CVT_I32 //  (0x0)
                 .word   U32_CMP
                 .equ    NUM_OPS,(. - cvtEnum) / 4
                 
-//  int vec_cvt(void *f32_ptr, void *s32_ptr, void *out_ptr, cvtEnum ops);
+//  int vec_cvt(void *src_ptr, void *dst_ptr, void *out_ptr, cvtEnum ops);
                 .global vec_cvt
-vec_cvt:        push            {r4-r6}
+vec_cvt:        push            {r4}
                 cmp             r3,#NUM_OPS
                 bge             err
                 
@@ -30,26 +30,29 @@ vec_cvt:        push            {r4-r6}
 
 F32_CVT_I32:    vcvt.s32.f32    q1,q0 
                 vstm            r1,{q1}
-                mov             r0,#0
                 b               fin
 
-I32_CVT_F32:    vcvt.f32.s32    q0,q1      
+I32_CVT_F32:    vcvt.f32.s32    q0,q1
                 vstm            r0,{q0}
-                mov             r0,#1
                 b               fin
 
-F32_CVT_U32:    mov             r0,#2
+F32_CVT_U32:    vcvt.u32.f32    q1,q0 
+                vstm            r1,{q1}
                 b               fin
 
-U32_CVT_F32:    mov             r0,#3
+U32_CVT_F32:    vcvt.f32.u32    q0,q1
+                vstm            r0,{q0}
                 b               fin
 
-F32_CMP:        mov             r0,#4
+F32_CMP:        vcgt.f32        q2,q0,q1
+                vstm            r2,{q2}
                 b               fin
 
-U32_CMP:        mov             r0,#5
+U32_CMP:        vcgt.u32        q2,q0,q1
+                vstm            r2,{q2}
                 b               fin
-
+                
 err:            mov             r0,#-1
-fin:            pop             {r4-r6}
+fin:            mov             r0,#0
+                pop             {r4}
                 bx              lr

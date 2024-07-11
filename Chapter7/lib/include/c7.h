@@ -21,7 +21,7 @@ typedef enum {
     NUM_OPS
 } cvtEnum;
 
-int vec_cvt(void *f32_ptr, void *s32_ptr, void *out_ptr, cvtEnum ops);
+int vec_cvt(void *src_ptr, void *dst_ptr, void *out_ptr, cvtEnum ops);
 
 #ifdef __cplusplus
 }
