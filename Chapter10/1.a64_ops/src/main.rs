@@ -27,7 +27,7 @@ fn main() {
     let num2 :i32 = if args.len() > 2 {args[2].parse().unwrap()} else {514};
     let num3 :i32 = if args.len() > 3 {args[3].parse().unwrap()} else {19};
     let num4 :i32 = if args.len() > 4 {args[4].parse().unwrap()} else {19};
-    let num5 :i32 = if args.len() > 4 {args[4].parse().unwrap()} else {810};
+    let num5 :i32 = if args.len() > 5 {args[5].parse().unwrap()} else {810};
 
 
     println!("RUST   : {}", (num1 + num2 - num3) * num4 / num5);
