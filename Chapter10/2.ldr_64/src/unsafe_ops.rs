@@ -88,12 +88,11 @@ pub fn sum_quad(src: Vec<i64>) -> i64 {
             "bge        98f",
 
             "2:",
-            "ldr        x4,[x2]",
+            "ldr        x4,[x2,x3,lsl #3]",
             "add        x0,x0,x4",
             "add        x3,x3,#1",
 
             "cmp        x3,x1",
-            "add        x2,x2,#8",
             "blt        2b",
 
             "98:",
