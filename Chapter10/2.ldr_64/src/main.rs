@@ -1,16 +1,17 @@
 mod unsafe_ops;
+use rand::{thread_rng, Rng};
 
 fn main() {
-    let word_vec:  Vec<i32> = vec!(1,2,3,4,5,6,7,8);
-    let quad_vec:  Vec<i64> = vec!(10, -20, 30, 40, 50, -60, 70, -80);
-    let short_vec: Vec<i16> = vec!(100, -200, 300, 400, 500, -600, 700, -800);
+    let word_vec:  Vec<i32> = rand_vec!(i32, 8, 0, 255);
+    let quad_vec:  Vec<i64> = rand_vec!(i64, 8, 0, 255);
+    let short_vec: Vec<i16> = rand_vec!(i16, 8, 0, 100);
 
-    let mut sum: i16 = 0;
-    for i in 0..short_vec.len() {sum += short_vec[i]}
+    let sum: i16 = sum_vec!(short_vec);
     println!("Safe:{} Unsafe: {}", sum, unsafe_ops::sum_short(short_vec));
 
-    let mut sum: i32 = 0;
-    for i in 0..word_vec.len() {sum += word_vec[i]}
+    let sum: i32 = sum_vec!(word_vec);
     println!("Safe:{} Unsafe: {}", sum, unsafe_ops::sum_word(word_vec));
-    print_vec!(quad_vec);
+
+    let sum: i64 = sum_vec!(quad_vec);
+    println!("Safe:{} Unsafe: {}", sum, unsafe_ops::sum_quad(quad_vec));
 }
