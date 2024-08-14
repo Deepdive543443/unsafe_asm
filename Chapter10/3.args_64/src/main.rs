@@ -53,36 +53,14 @@ extern {
     fn sum_cubes_unsafe(a: u8, b: i16, c: i32, d: i64, e: i8, f: u16, g: u32, h: u64, i: i32, j: i16) -> i64;
 }
 
-macro_rules! square {
-    ($input:tt) => {
-        {
-            let mut input_i64 = $input as i64;
-            input_i64 = input_i64 * input_i64 * input_i64;
-            input_i64
-        }
-    }
+macro_rules! sum_cubes {
+    ($sum:expr) => ($sum * $sum * $sum);
+    ($sum:expr, $($y:expr),+) => (sum_cubes!($sum as i64) + sum_cubes!($($y),+));
 }
-fn sum_cubes(a: u8, b: i16, c: i32, d: i64, e: i8, f: u16, g: u32, h: u64, i: i32, j: i16) -> i64{
-    
-    square!(a) + 
-    square!(b) + 
-    square!(c) + 
-    square!(d) + 
-    square!(e) + 
-    square!(f) + 
-    square!(g) + 
-    square!(h) + 
-    square!(i) + 
-    square!(j)
-}
-
 
 fn main() {
-    println!("Sum square (Safe)  : {}", sum_cubes(2, 4, 5, 6, 7, 8, 9, 1, 12, 4));
+    println!("Sum square (Safe)  : {}", sum_cubes!(2, 4, 5, 6, 7, 8, 9, 1, 12, 4));
     unsafe {
         println!("Sum square (UnSafe): {}", sum_cubes_unsafe(2, 4, 5, 6, 7, 8, 9, 1, 12, 4));
     }
-
-
-    println!("Hello, world!");
 }
