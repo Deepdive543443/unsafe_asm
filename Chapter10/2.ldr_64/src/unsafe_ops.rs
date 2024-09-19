@@ -1,8 +1,21 @@
 use std::arch::asm;
 
 #[macro_export]
+macro_rules! rand_vec {
+    ($type:ty, $len:tt, $min:expr, $max:expr) => {
+        {
+            let (min, max) = ($min as $type, $max as $type);
+            let mut rng = thread_rng();
+            let mut vec_rand: Vec<$type> = Vec::new();
+            for _ in 0..$len {vec_rand.push(rng.gen_range(min..max))}
+            vec_rand
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! print_vec {
-    ($vec:tt) => { print!("[ "); for i in 0..$vec.len() { print!("{:>7.4} ", $vec[i]) }; println!("]"); };
+    ($vec:tt) => { print!("[ "); for i in 0..$vec.len() { print!("{:>7.4},", $vec[i]) }; println!("]"); };
 }
 
 #[macro_export]
