@@ -14,6 +14,7 @@ use std::io::prelude::*;
 use nom::{number::complete::{le_u16, le_u32}, IResult};
 use nom::character::complete::anychar;
 
+#[derive(Default)]
 struct WavHeader {
     riff            : String,
     size            : u32,
@@ -29,25 +30,8 @@ struct WavHeader {
     data_size       : u32
 }
 
-fn wav_header_init() -> WavHeader {
-    WavHeader {
-        riff            : String::new(),
-        size            : 0,
-        wavefmt         : String::new(),
-        format_size     : 0,
-        format_type     : 0,
-        num_channels    : 0,
-        sample_rate     : 0,
-        bytes_per_sec   : 0,
-        mono            : 0,
-        bits_per_sample : 0,
-        chunk_mark      : String::new(),
-        data_size       : 0
-    }
-}
-
 fn parse_wav_header(input: &[u8]) -> IResult<&[u8], WavHeader> {
-    let mut wav_header = wav_header_init();
+    let mut wav_header = WavHeader::default();
     let mut ptr = input;
     let mut temp: char;
 
