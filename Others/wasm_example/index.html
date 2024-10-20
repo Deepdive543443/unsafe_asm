@@ -1,0 +1,28 @@
+<html>
+    <h1>Rust on WASM example</h1>
+    <input type="file" name="file" id="file"><br>
+    <span id="digest"></span>
+    <script type="module">
+        import init, {checksum_md5} from "./pkg/wasm_example.js";
+        var digest_output = document.getElementById("digest");
+        var file_input    = document.querySelector('input[id="file"]');
+        var file          = file_input.files[0]
+
+        function checkfile() {
+            var file_input  = document.querySelector('input[id="file"]').files[0];
+            const reader    = new FileReader();
+            reader.readAsArrayBuffer(file_input);
+            reader.onload = (event) => {
+                const chunk_array = new Uint8Array(event.target.result);
+                let digest = checksum_md5(chunk_array, chunk_array.byteLength);
+                console.log(digest);
+                digest_output.innerHTML = "Digest: " + digest;
+            }
+        }
+
+        init().then(()=>{
+            file_input.onchange = function(){checkfile();};
+        });
+
+    </script>
+</html>
