@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Rust WASM Demo</title>
+  </head>
+  <body>
+    <input type="file" name="file" id="file" onchange = "checkfile()"><br>
+    <span id="digest"></span>
+    <script src="target/wasm_init.js"></script>
+    <script>
+      const { checksum_md5 } = wasm_bindgen;
+
+      function checkfile() {
+          var file_input    = document.querySelector('input[id="file"]').files[0];
+          var digest_output = document.getElementById("digest");
+          const reader      = new FileReader();
+
+          reader.readAsArrayBuffer(file_input);
+          reader.onload = (event) => {
+              const chunk_array = new Uint8Array(event.target.result);
+              let digest = checksum_md5(chunk_array, chunk_array.byteLength);
+              console.log(digest);
+              digest_output.innerHTML = "Digest: " + digest;
+          }
+      }
+
+      async function run() {
+          await wasm_bindgen('target/wasm_init_bg.wasm');
+      }
+
+      run();
+    </script>
+  </body>
+</html>
