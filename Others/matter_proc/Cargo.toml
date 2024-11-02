@@ -1,0 +1,8 @@
+[package]
+name = "matter_proc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+verhoeff = "1.0.0"
+clap = { version = "4.5.20", features = ["derive"] }
