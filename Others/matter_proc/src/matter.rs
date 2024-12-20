@@ -92,18 +92,20 @@ impl Matter {
             self.ctx.chunk3()
         );
         if self.ctx.flow != CommissioningFlow::Standard {
-            output += &format!("{:05}", self.ctx.vid);
-            output += &format!("{:05}", self.ctx.vid);
+            output += &format!("{:05}{:05}", self.ctx.vid, self.ctx.pid);
         }
         output += &format!("{}", output.calculate_verhoeff_check_digit());
         return output;
     }
 
     pub fn gen_qr_code(&self) -> String {
-        let mut bits = format!("{:04b}", QR_PADDING);
-        bits += &format!("{:027b}", self.ctx.passcode);
-        bits += &format!("{:012b}", self.ctx.discriminator);
-        bits += &format!("{:08b}", self.ctx.cap_bitmask);
+        let mut bits = format!(
+            "{:04b}{:027b}{:012b}{:08b}", 
+            QR_PADDING, 
+            self.ctx.passcode, 
+            self.ctx.discriminator, 
+            self.ctx.cap_bitmask
+        );
 
         match self.ctx.flow {
             CommissioningFlow::Standard => {bits += &format!("{:02b}", CommissioningFlow::Standard as u32)}
@@ -111,9 +113,12 @@ impl Matter {
             CommissioningFlow::Custom => {bits += &format!("{:02b}", CommissioningFlow::Custom as u32)}
         }
 
-        bits += &format!("{:016b}", self.ctx.pid);
-        bits += &format!("{:016b}", self.ctx.vid);
-        bits += &format!("{:03b}", QR_VER);
+        bits += &format!(
+            "{:016b}{:016b}{:03b}",
+            self.ctx.pid, 
+            self.ctx.vid, 
+            QR_VER
+        );
 
         let mut bytes_rev: Vec<u8> = Vec::new();
         for byte in (to_bytes(&bits)).into_iter().rev() {bytes_rev.push(byte);}
