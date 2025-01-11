@@ -1,6 +1,6 @@
 use clap::Parser;
 use std::io;
-mod matter;
+use matter_proc::matter;
 
 #[derive(Parser)]
 struct Args {
