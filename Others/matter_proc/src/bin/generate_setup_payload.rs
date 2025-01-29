@@ -1,14 +1,14 @@
 use clap::Parser;
-use std::io;
 use matter_proc::matter;
+use std::io;
 
 #[derive(Parser)]
 struct Args {
     #[arg(long)]
-    vendor_id: u32,
+    vendor_id: u16,
 
     #[arg(long)]
-    product_id: u32,
+    product_id: u16,
 
     #[arg(long)]
     discriminator: u16,
@@ -20,7 +20,7 @@ struct Args {
     commissioning_flow: u8,
 
     #[arg(long, default_value_t = 2)]
-    discovery_cap_bitmask: u32,
+    discovery_cap_bitmask: u8,
 }
 
 fn main() -> io::Result<()> {
