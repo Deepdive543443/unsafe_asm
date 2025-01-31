@@ -11,6 +11,6 @@ struct Args {
 fn main() -> io::Result<()> {
     let args = Args::parse();
     let matter = matter::parse_qrcode(&args.qrcode[..])?;
-    matter.print();
+    matter.print()?;
     Ok(())
 }

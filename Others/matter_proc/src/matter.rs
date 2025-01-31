@@ -76,27 +76,32 @@ impl Matter {
         return ((self.qrcode.passcode >> pass_shift) & pass_mask) << CHUNK3_PASS_MSBITS_POS;
     }
 
-    pub fn gen_manual_code(&self) -> String {
+    pub fn gen_manual_code(&self) -> io::Result<String> {
         let mut output = format!(
             "{:01}{:05}{:04}",
             self.chunk1(),
             self.chunk2(),
             self.chunk3()
         );
-        if self.qrcode.flow != 0 {
-            output += &format!("{:05}{:05}", self.qrcode.vid, self.qrcode.pid);
-        }
+        match self.qrcode.flow {
+            0 => Ok(()),
+            1 | 2 => {
+                output += &format!("{:05}{:05}", self.qrcode.vid, self.qrcode.pid);
+                Ok(())
+            }
+            3.. => UniErr!("Invalid commisionning flow"),
+        }?;
         output += &format!("{}", output.calculate_verhoeff_check_digit());
-        return output;
+        Ok(output)
     }
 
-    pub fn gen_qr_code(&self) -> String {
-        let mut data_out = self.qrcode.to_bytes().unwrap();
+    pub fn gen_qr_code(&self) -> io::Result<String> {
+        let mut data_out = self.qrcode.to_bytes()?;
         data_out.reverse();
-        return format!("MT:{}", base38::encode(data_out));
+        Ok(format!("MT:{}", base38::encode(data_out)?))
     }
 
-    pub fn print(&self) {
+    pub fn print(&self) -> io::Result<()> {
         println!("Flow                   : {}", self.qrcode.flow);
         println!("passcode               : {}", self.qrcode.passcode);
         println!("Short Discriminator    : {}", self.qrcode.discriminator >> 8);
@@ -104,7 +109,8 @@ impl Matter {
         println!("Discovery Capabilities : {}", self.qrcode.discovery);
         println!("Vendor Id              : {}   (0x{:04x})", self.qrcode.vid, self.qrcode.vid);
         println!("Product Id             : {}   (0x{:04x})", self.qrcode.pid, self.qrcode.pid);
-        println!("ManualCode             : {}", self.gen_manual_code());
+        println!("ManualCode             : {}", self.gen_manual_code()?);
+        Ok(())
     }
 }
 
@@ -151,11 +157,20 @@ pub fn new(
 }
 
 pub fn parse_qrcode(input: &str) -> io::Result<Matter> {
-    let input = input[3..].to_string();
-    let mut bytes: Vec<u8> = base38::decode(input)?;
+    match input.len() {
+        22 => Ok(()),
+        _ => UniErr!(format!("Invalid input lenght {}", input.len()))
+    }?;
+
+    match &input[0..3] {
+        "MT:" => Ok(()),
+        _ => UniErr!(format!("Invalid input header {}", &input[0..3]))
+    }?;
+
+    let mut bytes: Vec<u8> = base38::decode(input[3..].to_string())?;
     bytes.reverse();
 
-    let (_rest, val) = QRCode::from_bytes((bytes.as_ref(), 0)).unwrap();
+    let (_rest, val) = QRCode::from_bytes((bytes.as_ref(), 0))?;
     Ok(Matter {
         qrcode: QRCode {
             padding: QR_PADDING,

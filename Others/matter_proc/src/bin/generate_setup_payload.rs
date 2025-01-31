@@ -34,7 +34,7 @@ fn main() -> io::Result<()> {
         args.commissioning_flow,
         args.discovery_cap_bitmask,
     )?;
-    println!("Manualcode : {}", matter.gen_manual_code());
-    println!("QRCode     : {}", matter.gen_qr_code());
+    println!("Manualcode : {}", matter.gen_manual_code()?);
+    println!("QRCode     : {}", matter.gen_qr_code()?);
     Ok(())
 }

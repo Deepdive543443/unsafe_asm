@@ -13,7 +13,13 @@ macro_rules! UniErr {
     ($ErrMsg: expr) => {Err(io::Error::new(io::ErrorKind::Other, $ErrMsg))};
 }
 
-pub fn encode(bytes: Vec<u8>) -> String {
+pub fn encode(bytes: Vec<u8>) -> io::Result<String> {
+    if bytes.len() == 0 {
+        UniErr!("No Bytes provided")
+    } else {
+        Ok(())
+    }?;
+
     let mut qrcode = String::new();
 
     for i in (0..bytes.len()).step_by(MAX_BYTES_IN_CHUNK) {
@@ -32,7 +38,7 @@ pub fn encode(bytes: Vec<u8>) -> String {
             val /= CODE.len();
         }
     }
-    return qrcode;
+    Ok(qrcode)
 }
 
 pub fn decode(chars: String) -> io::Result<Vec<u8>> {
@@ -48,16 +54,19 @@ pub fn decode(chars: String) -> io::Result<Vec<u8>> {
         for j in (i..(i + chars_in_chunk)).rev() {
             let char_idx = match CODE.iter().position(|n| *n == &chars[j..j + 1]) {
                 Some(x) => Ok(x as i64),
-                None    => UniErr!(format!("Cannot decode character {}", &chars[j..j + 1])),
+                None => UniErr!(format!("Cannot decode character {}", &chars[j..j + 1])),
             }?;
             value = value * RADIX + char_idx;
         }
 
-        let bytes_in_chunk: usize = NUM_CHARS.iter().position(|n| *n == chars_in_chunk).unwrap() + 1;
+        let bytes_in_chunk: usize = match NUM_CHARS.iter().position(|n| *n == chars_in_chunk) {
+            Some(x) => Ok(x + 1),
+            None => UniErr!(format!("Invalid chars in chunk {}", chars_in_chunk)),
+        }?;
         for _ in 0..bytes_in_chunk {
             bytearray.push((value & 0xFF) as u8);
             value = value >> 8;
         }
     }
-    return Ok(bytearray);
+    Ok(bytearray)
 }
