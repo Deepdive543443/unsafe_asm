@@ -33,7 +33,7 @@ struct QRCode {
 
 pub struct Matter {
     qrcode: QRCode,
-    short_discriminator: u8
+    short_discriminator: u8,
 }
 
 const CHUNK1_DISC_MSBITS_LEN: i32 = 2;
@@ -59,7 +59,7 @@ impl Matter {
         let disc_shift = DISC_LEN - CHUNK1_DISC_MSBITS_LEN;
         let disc_mask = (1 << CHUNK1_DISC_MSBITS_LEN) - 1;
         let disc_chunk = (self.short_discriminator >> disc_shift) & disc_mask;
-        let vid_pid_present_flag = if self.qrcode.flow == 0 {0} else {1};
+        let vid_pid_present_flag = if self.qrcode.flow == 0 { 0 } else { 1 };
         return (disc_chunk << CHUNK1_DISC_MSBITS_POS) | (vid_pid_present_flag << CHUNK1_VID_PID_POS);
     }
 
@@ -152,19 +152,19 @@ pub fn new(
             vid: vid,
             version: QR_VER,
         },
-        short_discriminator: (discriminator >> 8) as u8
+        short_discriminator: (discriminator >> 8) as u8,
     })
 }
 
 pub fn parse_qrcode(input: &str) -> io::Result<Matter> {
     match input.len() {
         22 => Ok(()),
-        _ => UniErr!(format!("Invalid input lenght {}", input.len()))
+        _ => UniErr!(format!("Invalid input lenght {}", input.len())),
     }?;
 
     match &input[0..3] {
         "MT:" => Ok(()),
-        _ => UniErr!(format!("Invalid input header {}", &input[0..3]))
+        _ => UniErr!(format!("Invalid input header {}", &input[0..3])),
     }?;
 
     let mut bytes: Vec<u8> = base38::decode(input[3..].to_string())?;
@@ -182,6 +182,6 @@ pub fn parse_qrcode(input: &str) -> io::Result<Matter> {
             vid: val.vid,
             version: QR_VER,
         },
-        short_discriminator: (val.discriminator >> 8) as u8
+        short_discriminator: (val.discriminator >> 8) as u8,
     })
 }
