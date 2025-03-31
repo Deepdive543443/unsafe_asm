@@ -103,7 +103,7 @@ impl Matter {
 
     pub fn print(&self) -> io::Result<()> {
         println!("Flow                   : {}", self.qrcode.flow);
-        println!("passcode               : {}", self.qrcode.passcode);
+        println!("Passcode               : {}", self.qrcode.passcode);
         println!("Short Discriminator    : {}", self.qrcode.discriminator >> 8);
         println!("Long Discriminator     : {}", self.qrcode.discriminator);
         println!("Discovery Capabilities : {}", self.qrcode.discovery);
