@@ -5,34 +5,34 @@ mod base38;
 
 #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(endian = "big")]
-struct QRCode {
+pub struct QRCode {
     #[deku(bits = 4)]
     padding: u8,
 
     #[deku(bits = 27)]
-    passcode: u32,
+    pub passcode: u32,
 
     #[deku(bits = 12)]
-    discriminator: u16,
+    pub discriminator: u16,
 
     #[deku(bits = 8)]
-    discovery: u8,
+    pub discovery: u8,
 
     #[deku(bits = 2)]
-    flow: u8,
+    pub flow: u8,
 
     #[deku(bits = 16)]
-    pid: u16,
+    pub pid: u16,
 
     #[deku(bits = 16)]
-    vid: u16,
+    pub vid: u16,
 
     #[deku(bits = 3)]
     version: u8,
 }
 
 pub struct Matter {
-    qrcode: QRCode,
+    pub qrcode: QRCode,
     short_discriminator: u8,
 }
 
@@ -99,18 +99,6 @@ impl Matter {
         let mut data_out = self.qrcode.to_bytes()?;
         data_out.reverse();
         Ok(format!("MT:{}", base38::encode(data_out)?))
-    }
-
-    pub fn print(&self) -> io::Result<()> {
-        println!("Flow                   : {}", self.qrcode.flow);
-        println!("Passcode               : {}", self.qrcode.passcode);
-        println!("Short Discriminator    : {}", self.qrcode.discriminator >> 8);
-        println!("Long Discriminator     : {}", self.qrcode.discriminator);
-        println!("Discovery Capabilities : {}", self.qrcode.discovery);
-        println!("Vendor Id              : {}   (0x{:04x})", self.qrcode.vid, self.qrcode.vid);
-        println!("Product Id             : {}   (0x{:04x})", self.qrcode.pid, self.qrcode.pid);
-        println!("ManualCode             : {}", self.gen_manual_code()?);
-        Ok(())
     }
 }
 
