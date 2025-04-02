@@ -1,4 +1,5 @@
 use clap::Parser;
+use qrcode_generator::QrCodeEcc;
 use matter_proc::matter;
 use std::io;
 
@@ -21,6 +22,9 @@ struct Args {
 
     #[arg(long, default_value_t = 2)]
     discovery_cap_bitmask: u8,
+
+    #[arg(short, long, default_value_t = false)]
+    save_qrcode: bool
 }
 
 fn main() -> io::Result<()> {
@@ -34,7 +38,15 @@ fn main() -> io::Result<()> {
         args.commissioning_flow,
         args.discovery_cap_bitmask,
     )?;
-    println!("Manualcode : {}", matter.gen_manual_code()?);
-    println!("QRCode     : {}", matter.gen_qr_code()?);
+
+    let manualcode = matter.gen_manual_code()?;
+    let qrcode = matter.gen_qr_code()?;
+
+    println!("Manualcode : {}", manualcode);
+    println!("QRCode     : {}", &qrcode);
+
+    if args.save_qrcode {
+        qrcode_generator::to_png_to_file(&qrcode, QrCodeEcc::Medium, 256, format!("{}.png", &qrcode[3..])).unwrap();
+    }
     Ok(())
 }

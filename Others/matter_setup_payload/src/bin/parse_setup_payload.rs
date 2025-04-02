@@ -1,10 +1,14 @@
 use clap::Parser;
+use qrcode_generator::QrCodeEcc;
 use matter_proc::matter;
 use std::io;
 
 #[derive(Parser)]
 struct Args {
     qrcode: String,
+
+    #[arg(short, long, default_value_t = false)]
+    save_qrcode: bool
 }
 
 fn main() -> io::Result<()> {
@@ -17,6 +21,10 @@ fn main() -> io::Result<()> {
     println!("Discovery Capabilities : {}", matter.qrcode.discovery);
     println!("Vendor Id              : {}   (0x{:04x})", matter.qrcode.vid, matter.qrcode.vid);
     println!("Product Id             : {}   (0x{:04x})", matter.qrcode.pid, matter.qrcode.pid);
-    println!("ManualCode             : {}", matter.gen_manual_code()?);    
+    println!("ManualCode             : {}", matter.gen_manual_code()?);
+
+    if args.save_qrcode {
+        qrcode_generator::to_png_to_file(&args.qrcode, QrCodeEcc::Medium, 256, format!("{}.png", &args.qrcode[3..])).unwrap();
+    }
     Ok(())
 }

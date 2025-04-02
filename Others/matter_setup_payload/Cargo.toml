@@ -7,6 +7,7 @@ edition = "2021"
 verhoeff = "1.0.0"
 clap = { version = "4.5.20", features = ["derive"] }
 deku = "0.18.1"
+qrcode-generator = "5.0.0"
 
 [lib]
 name = "matter_proc"
