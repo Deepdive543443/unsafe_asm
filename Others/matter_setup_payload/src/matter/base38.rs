@@ -9,13 +9,13 @@ const CODE: [&str; 38] = [
 ];
 const RADIX: i64 = CODE.len() as i64;
 
-macro_rules! UniErr {
+macro_rules! Base38Err {
     ($ErrMsg: expr) => {Err(io::Error::new(io::ErrorKind::Other, $ErrMsg))};
 }
 
 pub fn encode(bytes: Vec<u8>) -> io::Result<String> {
     if bytes.len() == 0 {
-        UniErr!("No Bytes provided")
+        Base38Err!("No Bytes provided")
     } else {
         Ok(())
     }?;
@@ -54,14 +54,14 @@ pub fn decode(chars: String) -> io::Result<Vec<u8>> {
         for j in (i..(i + chars_in_chunk)).rev() {
             let char_idx = match CODE.iter().position(|n| *n == &chars[j..j + 1]) {
                 Some(x) => Ok(x as i64),
-                None => UniErr!(format!("Cannot decode character {}", &chars[j..j + 1])),
+                None => Base38Err!(format!("Cannot decode character {}", &chars[j..j + 1])),
             }?;
             value = value * RADIX + char_idx;
         }
 
         let bytes_in_chunk: usize = match NUM_CHARS.iter().position(|n| *n == chars_in_chunk) {
             Some(x) => Ok(x + 1),
-            None => UniErr!(format!("Invalid chars in chunk {}", chars_in_chunk)),
+            None => Base38Err!(format!("Invalid chars in chunk {}", chars_in_chunk)),
         }?;
         for _ in 0..bytes_in_chunk {
             bytearray.push((value & 0xFF) as u8);

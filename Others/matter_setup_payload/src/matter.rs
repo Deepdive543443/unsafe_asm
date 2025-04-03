@@ -50,7 +50,8 @@ const PASS_LEN: i32 = 27;
 const QR_VER: u8 = 0;
 const QR_PADDING: u8 = 0;
 
-macro_rules! UniErr {
+#[macro_export]
+macro_rules! MatterProcErr {
     ($ErrMsg: expr) => {Err(io::Error::new(io::ErrorKind::Other, $ErrMsg))};
 }
 
@@ -89,7 +90,7 @@ impl Matter {
                 output += &format!("{:05}{:05}", self.qrcode.vid, self.qrcode.pid);
                 Ok(())
             }
-            3.. => UniErr!("Invalid commisionning flow"),
+            3.. => MatterProcErr!("Invalid commisionning flow"),
         }?;
         output += &format!("{}", output.calculate_verhoeff_check_digit());
         Ok(output)
@@ -112,12 +113,12 @@ pub fn new(
 ) -> io::Result<Matter> {
     match flow {
         0..=2 => Ok(()),
-        _ => UniErr!(format!("Invalid Flow Value {}, should be 0, 1, 2", flow)),
+        _ => MatterProcErr!(format!("Invalid Flow Value {}, should be 0, 1, 2", flow)),
     }?;
 
     match discriminator {
         0..=4095 => Ok(()),
-        _ => UniErr!(format!("Invalid discriminator value {}, should be a value between 0 and 4095", discriminator)),
+        _ => MatterProcErr!(format!("Invalid discriminator value {}, should be a value between 0 and 4095", discriminator)),
     }?;
 
     match passcode {
@@ -125,7 +126,7 @@ pub fn new(
         33333333 | 44444444 | 55555555 |
         66666666 | 77777777 | 88888888 |
         99999999 | 12345678 | 87654321
-        => UniErr!(format!("Invalid passcode value {}, please checkout documents about invalid value of passcode", passcode)),
+        => MatterProcErr!(format!("Invalid passcode value {}, please checkout documents about invalid value of passcode", passcode)),
         _ => Ok(()),
     }?;
 
@@ -147,12 +148,12 @@ pub fn new(
 pub fn parse_qrcode(input: &str) -> io::Result<Matter> {
     match input.len() {
         22 => Ok(()),
-        _ => UniErr!(format!("Invalid input lenght {}", input.len())),
+        _ => MatterProcErr!(format!("Invalid input lenght {}", input.len())),
     }?;
 
     match &input[0..3] {
         "MT:" => Ok(()),
-        _ => UniErr!(format!("Invalid input header {}", &input[0..3])),
+        _ => MatterProcErr!(format!("Invalid input header {}", &input[0..3])),
     }?;
 
     let mut bytes: Vec<u8> = base38::decode(input[3..].to_string())?;

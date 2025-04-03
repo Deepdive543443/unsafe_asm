@@ -1,6 +1,7 @@
 use clap::Parser;
-use qrcode_generator::QrCodeEcc;
 use matter_proc::matter;
+use matter_proc::MatterProcErr;
+use qrcode_generator::QrCodeEcc;
 use std::io;
 
 #[derive(Parser)]
@@ -24,7 +25,7 @@ struct Args {
     discovery_cap_bitmask: u8,
 
     #[arg(short, long, default_value_t = false)]
-    save_qrcode: bool
+    save_qrcode: bool,
 }
 
 fn main() -> io::Result<()> {
@@ -46,7 +47,15 @@ fn main() -> io::Result<()> {
     println!("QRCode     : {}", &qrcode);
 
     if args.save_qrcode {
-        qrcode_generator::to_png_to_file(&qrcode, QrCodeEcc::Medium, 256, format!("{}.png", &qrcode[3..])).unwrap();
+        match qrcode_generator::to_png_to_file(
+            &qrcode,
+            QrCodeEcc::Medium,
+            256,
+            format!("{}.png", &qrcode[3..]),
+        ) {
+            Ok(()) => Ok(()),
+            Err(_) => MatterProcErr!(format!("Fail to save qrcode img {}", &qrcode[3..]))
+        }?;
     }
     Ok(())
 }
