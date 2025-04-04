@@ -8,7 +8,7 @@ mod bitmap;
 const NV12_WIDTH: usize = 1536;
 const NV12_HEIGHT: usize = 1022;
 
-fn nv12_2_bgr(yy: &[u8], uv: &[u8], width: usize, height: usize, rgb: &mut [u8]) {
+fn nv12_2_bgr(yy: &Vec<u8>, uv: &Vec<u8>, width: usize, height: usize, rgb: &mut Vec<u8>) {
     for h in (0..height).step_by(2) {
         for w in (0..width).step_by(2) {
             let offset = h * width + w;
@@ -45,7 +45,7 @@ fn nv12_2_bgr(yy: &[u8], uv: &[u8], width: usize, height: usize, rgb: &mut [u8])
     }
 }
 
-fn nv12_rot180(yy: &[u8], uv: &[u8], dst_yy: &mut [u8], dst_uv: &mut [u8]) {
+fn nv12_rot180(yy: &Vec<u8>, uv: &Vec<u8>, dst_yy: &mut Vec<u8>, dst_uv: &mut Vec<u8>) {
     dst_yy.copy_from_slice(&yy[..]);
     dst_uv.copy_from_slice(&uv[..]);
 
@@ -58,26 +58,22 @@ fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let mut nv12_data = File::open(args[1].clone())?;
 
-    let mut src_yy = [0u8; NV12_WIDTH * NV12_HEIGHT];
-    let mut src_uv = [0u8; NV12_WIDTH * NV12_HEIGHT / 2];
-    nv12_data.read(&mut src_yy)?;
-    nv12_data.read(&mut src_uv)?;
+    let mut src_yy = vec![0u8; NV12_WIDTH * NV12_HEIGHT];
+    let mut src_uv = vec![0u8; NV12_WIDTH * NV12_HEIGHT / 2];
+    let mut dst_yy = vec![0u8; NV12_WIDTH * NV12_HEIGHT];
+    let mut dst_uv = vec![0u8; NV12_WIDTH * NV12_HEIGHT / 2];
+    let mut rgb = vec![0u8; NV12_WIDTH * NV12_HEIGHT * 3];
+    nv12_data.read_exact(&mut src_yy)?;
+    nv12_data.read_exact(&mut src_uv)?;
 
-    {
-        let mut rgb = [0u8; NV12_WIDTH * NV12_HEIGHT * 3];
-        nv12_2_bgr(&src_yy, &src_uv, NV12_WIDTH, NV12_HEIGHT, &mut rgb);
-        let bmp = bitmap::new(&rgb, NV12_WIDTH, NV12_HEIGHT);
-        bitmap::save(bmp, "src")?;
-    }
+    nv12_2_bgr(&src_yy, &src_uv, NV12_WIDTH, NV12_HEIGHT, &mut rgb);
+    let bmp = bitmap::new(&rgb, NV12_WIDTH, NV12_HEIGHT);
+    bitmap::save(bmp, "src")?;
 
-    // {
-    //     let mut rgb = [0u8; NV12_WIDTH * NV12_HEIGHT * 3];
-    //     let mut dst_yy = [0u8; NV12_WIDTH * NV12_HEIGHT];
-    //     let mut dst_uv = [0u8; NV12_WIDTH * NV12_HEIGHT / 2];
-    //     nv12_rot180(&src_yy, &src_uv, &mut dst_yy, &mut dst_uv);
-    //     nv12_2_bgr(&dst_yy, &dst_uv, NV12_WIDTH, NV12_HEIGHT, &mut rgb);
-    //     let bmp = bitmap::new(&rgb, NV12_WIDTH, NV12_HEIGHT);
-    //     bitmap::save(bmp, "rot_180");
-    // }
+    nv12_rot180(&src_yy, &src_uv, &mut dst_yy, &mut dst_uv);
+    nv12_2_bgr(&dst_yy, &dst_uv, NV12_WIDTH, NV12_HEIGHT, &mut rgb);
+    let bmp = bitmap::new(&rgb, NV12_WIDTH, NV12_HEIGHT);
+    bitmap::save(bmp, "rot_180")?;
+
     Ok(())
 }
