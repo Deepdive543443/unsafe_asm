@@ -58,7 +58,7 @@ pub struct BMP {
     data: Vec<u8>,
 }
 
-impl Default for WINBMPFILEHEADER {
+impl WINBMPFILEHEADER {
     fn default() -> Self {
         WINBMPFILEHEADER {
             file_type: 0x4D42,
@@ -70,7 +70,7 @@ impl Default for WINBMPFILEHEADER {
     }
 }
 
-impl Default for WINNTBITMAPHEADER {
+impl WINNTBITMAPHEADER {
     fn default() -> Self {
         WINNTBITMAPHEADER {
             size: mem::size_of::<WINNTBITMAPHEADER>() as u32,
@@ -88,13 +88,34 @@ impl Default for WINNTBITMAPHEADER {
     }
 }
 
-impl Default for BMP {
+impl BMP {
     fn default() -> Self {
         BMP {
             file_header: WINBMPFILEHEADER::default(),
             bitmap_header: WINNTBITMAPHEADER::default(),
             data: Vec::new(),
         }
+    }
+
+    pub fn save(self, filename: &str) -> std::io::Result<()> {
+        let mut bitmap_file = File::create(format!("{}.bmp", filename))?;
+
+        let file_header_bytes = unsafe {
+            std::mem::transmute::<WINBMPFILEHEADER, [u8; mem::size_of::<WINBMPFILEHEADER>()]>(
+                self.file_header,
+            )
+        };
+        bitmap_file.write_all(&file_header_bytes)?;
+
+        let bitmap_header_bytes = unsafe {
+            std::mem::transmute::<WINNTBITMAPHEADER, [u8; mem::size_of::<WINNTBITMAPHEADER>()]>(
+                self.bitmap_header,
+            )
+        };
+        bitmap_file.write_all(&bitmap_header_bytes)?;
+        bitmap_file.write_all(self.data.as_slice())?;
+
+        Ok(())
     }
 }
 
@@ -107,36 +128,13 @@ pub fn new(pixels: &[u8], width: usize, height: usize) -> BMP {
     bmp.bitmap_header.height = height as u32;
     bmp.bitmap_header.size_of_bitmap = (width * height * 3) as u32;
     bmp.file_header.file_size = bmp.file_header.bitmap_offset + bmp.bitmap_header.size_of_bitmap;
+    bmp.data = vec![0u8; aligned_byte_per_row * height];
 
-    for h in (0..height).rev() {
-        for byte_idx in 0..pixels_bytes_per_row {
-            bmp.data.push(pixels[h * pixels_bytes_per_row + byte_idx]);
-        }
-
-        for _ in 0..(aligned_byte_per_row - pixels_bytes_per_row) {
-            bmp.data.push(0);
-        }
+    for h in 0..height {
+        let offset_bitmap = (height - 1 - h) * aligned_byte_per_row;
+        let offset_pixels = h * pixels_bytes_per_row;
+        bmp.data[offset_bitmap..(offset_bitmap + pixels_bytes_per_row)]
+            .copy_from_slice(&pixels[offset_pixels..(offset_pixels + pixels_bytes_per_row)]);
     }
     return bmp;
-}
-
-pub fn save(bmp: BMP, filename: &str) -> std::io::Result<()> {
-    let mut bitmap_file = File::create(format!("{}.bmp", filename))?;
-
-    let file_header_bytes = unsafe {
-        std::mem::transmute::<WINBMPFILEHEADER, [u8; mem::size_of::<WINBMPFILEHEADER>()]>(
-            bmp.file_header,
-        )
-    };
-    bitmap_file.write_all(&file_header_bytes)?;
-
-    let bitmap_header_bytes = unsafe {
-        std::mem::transmute::<WINNTBITMAPHEADER, [u8; mem::size_of::<WINNTBITMAPHEADER>()]>(
-            bmp.bitmap_header,
-        )
-    };
-    bitmap_file.write_all(&bitmap_header_bytes)?;
-    bitmap_file.write_all(bmp.data.as_slice())?;
-
-    Ok(())
 }
