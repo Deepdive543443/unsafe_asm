@@ -1,6 +1,8 @@
-use bytemuck::cast_slice_mut;
 use std::fs::File;
 use std::io::prelude::*;
+
+#[cfg(not(feature = "neon"))]
+use bytemuck::cast_slice_mut;
 
 #[cfg(feature = "neon")]
 use std::arch::asm;
@@ -75,15 +77,15 @@ impl NV12 {
 
     #[cfg(feature = "neon")]
     pub fn rot(&self) -> NV12 {
-        let mut rotated = NV12 {
+        let rotated = NV12 {
             yy: vec![0u8; self.width * self.height],
             uv: vec![0u8; self.width * self.height / 2],
             width: self.width,
             height: self.height,
         };
 
-        let mut num_vec = (self.width * self.height) >> 4;
-        let mut remain = self.width * self.height - num_vec * 16;
+        let num_vec = (self.width * self.height) >> 4;
+        let remain = self.width * self.height - num_vec * 16;
 
         if num_vec > 0 {
             let rev_tbl: [u8; 16] = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
@@ -112,8 +114,8 @@ impl NV12 {
                     "bne        1b",
 
                     "2:",
-                    inout("x0") num_vec,
-                    inout("x1") remain,
+                    in("x0") num_vec,
+                    in("x1") remain,
                     in("x2") &rev_tbl[0],
                     in("x3") &self.yy[0],
                     in("x4") &rotated.yy[self.width * self.height - 16],
@@ -121,8 +123,8 @@ impl NV12 {
             }
         }
 
-        let mut num_vec = (self.width * self.height / 2) >> 4;
-        let mut remain = (self.width * self.height / 2) - num_vec * 16;
+        let num_vec = (self.width * self.height / 2) >> 4;
+        let remain = (self.width * self.height / 2) - num_vec * 16;
 
         if num_vec > 0 {
             let rev_tbl: [u8; 16] = [14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1];
@@ -151,8 +153,8 @@ impl NV12 {
                     "bne        1b",
 
                     "2:",
-                    inout("x0") num_vec,
-                    inout("x1") remain,
+                    in("x0") num_vec,
+                    in("x1") remain,
                     in("x2") &rev_tbl[0],
                     in("x3") &self.uv[0],
                     in("x4") &rotated.uv[(self.width * self.height / 2) - 16],
