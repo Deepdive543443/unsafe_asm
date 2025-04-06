@@ -17,7 +17,9 @@ fn main() -> std::io::Result<()> {
             .unwrap()
             .as_millis();
 
-        nv12_src.rot();
+        nv12_src.rot(180)?;
+        nv12_src.rot(90)?;
+        nv12_src.rot(270)?;
 
         let time_end = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -26,8 +28,12 @@ fn main() -> std::io::Result<()> {
         println!("[{:2}/20] {} ms", i + 1, time_end - time_start);
     }
 
-    let nv12_rot180 = nv12_src.rot();
+    let (nv12_rot180, nv12_rot90, nv12_rot270) =
+        (nv12_src.rot(180)?, nv12_src.rot(90)?, nv12_src.rot(270)?);
+
     bitmap::new(&nv12_src.bgr(), nv12_src.width, nv12_src.height).save("src")?;
     bitmap::new(&nv12_rot180.bgr(), nv12_rot180.width, nv12_rot180.height).save("rot180")?;
+    bitmap::new(&nv12_rot270.bgr(), nv12_rot270.width, nv12_rot270.height).save("rot270")?;
+    bitmap::new(&nv12_rot90.bgr(), nv12_rot90.width, nv12_rot90.height).save("rot90")?;
     Ok(())
 }

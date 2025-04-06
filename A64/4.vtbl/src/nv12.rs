@@ -1,9 +1,6 @@
 use std::fs::File;
 use std::io::prelude::*;
 
-#[cfg(not(feature = "neon"))]
-use bytemuck::cast_slice_mut;
-
 #[cfg(feature = "neon")]
 use std::arch::asm;
 
@@ -12,6 +9,31 @@ pub struct NV12 {
     pub uv: Vec<u8>,
     pub width: usize,
     pub height: usize,
+}
+
+#[macro_export]
+macro_rules! NV12Err {
+    ($ErrMsg: expr) => {
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("NV12Err: {}", $ErrMsg),
+        ))
+    };
+}
+
+fn rotated_coordinate(
+    src_w: usize,
+    src_h: usize,
+    src_x: usize,
+    src_y: usize,
+    rot: i32,
+) -> std::io::Result<(usize, usize)> {
+    match rot {
+        90 => Ok((src_h - 1 - src_y, src_x)),
+        180 => Ok((src_w - 1 - src_x, src_h - 1 - src_y)),
+        270 => Ok((src_y, src_w - 1 - src_x)),
+        _ => NV12Err!("Unsupported rotations angle"),
+    }
 }
 
 impl NV12 {
@@ -57,26 +79,62 @@ impl NV12 {
     }
 
     #[cfg(not(feature = "neon"))]
-    pub fn rot(&self) -> NV12 {
-        let mut rotated = NV12 {
-            yy: vec![0u8; self.width * self.height],
-            uv: vec![0u8; self.width * self.height / 2],
-            width: self.width,
-            height: self.height,
-        };
+    pub fn rot(&self, rot: i32) -> std::io::Result<NV12> {
+        match rot {
+            180 => {
+                let mut rotated = NV12 {
+                    yy: vec![0u8; self.width * self.height],
+                    uv: vec![0u8; self.width * self.height / 2],
+                    width: self.width,
+                    height: self.height,
+                };
 
-        rotated.yy.copy_from_slice(&self.yy[..]);
-        rotated.uv.copy_from_slice(&self.uv[..]);
+                rotated.yy.copy_from_slice(&self.yy[..]);
+                rotated.uv.copy_from_slice(&self.uv[..]);
 
-        let u16_buffer: &mut [u16] = cast_slice_mut(&mut rotated.uv[..]);
-        rotated.yy.reverse();
-        u16_buffer.reverse();
+                let u16_buffer: &mut [u16] = bytemuck::cast_slice_mut(&mut rotated.uv[..]);
+                rotated.yy.reverse();
+                u16_buffer.reverse();
+                Ok(rotated)
+            }
 
-        return rotated;
+            90 | 270 => {
+                let mut rotated = NV12 {
+                    yy: vec![0u8; self.width * self.height],
+                    uv: vec![0u8; self.width * self.height / 2],
+                    width: self.height,
+                    height: self.width,
+                };
+
+                for y in 0..self.height {
+                    for x in 0..self.width {
+                        let (dst_x, dst_y) =
+                            rotated_coordinate(self.width, self.height, x, y, rot)?;
+                        rotated.yy[rotated.width * dst_y + dst_x] = self.yy[y * self.width + x];
+                    }
+                }
+
+                let (srcuv_width, srcuv_height, dstuv_width) =
+                    (self.width / 2, self.height / 2, self.height / 2);
+                let (dst_uv16, src_uv16): (&mut [u16], &[u16]) = (
+                    bytemuck::cast_slice_mut(&mut rotated.uv[..]),
+                    bytemuck::cast_slice(&self.uv[..]),
+                );
+                for y in 0..srcuv_height {
+                    for x in 0..srcuv_width {
+                        let (dst_x, dst_y) =
+                            rotated_coordinate(srcuv_width, srcuv_height, x, y, rot)?;
+                        dst_uv16[dstuv_width * dst_y + dst_x] = src_uv16[srcuv_width * y + x];
+                    }
+                }
+                Ok(rotated)
+            }
+            _ => NV12Err!("Non supported rotation"),
+        }
     }
 
     #[cfg(feature = "neon")]
-    pub fn rot(&self) -> NV12 {
+    pub fn rot(&self, rot: i32) -> std::io::Result<NV12> {
         let rotated = NV12 {
             yy: vec![0u8; self.width * self.height],
             uv: vec![0u8; self.width * self.height / 2],
@@ -161,7 +219,10 @@ impl NV12 {
                 );
             }
         }
-        return rotated;
+        match rot {
+            180 => Ok(rotated),
+            _ => NV12Err!("Non supported rotation"),
+        }
     }
 }
 
