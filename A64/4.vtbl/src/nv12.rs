@@ -142,85 +142,87 @@ impl NV12 {
             height: self.height,
         };
 
-        let num_vec = (self.width * self.height) >> 4;
-        let remain = self.width * self.height - num_vec * 16;
-
-        if num_vec > 0 {
-            let rev_tbl: [u8; 16] = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-            unsafe {
-                asm!(
-                    "ld1        {{v0.16b}}, [x2]",
-                    "mov        x5, #-16",
-
-                    "0:",
-                    "ld1        {{v1.16b}}, [x3], #16",
-                    "tbl        v2.16b, {{v1.16b}}, v0.16b",
-                    "st1        {{v2.16b}}, [x4], x5",
-                    "subs       x0, x0, #1",
-                    "bne        0b",
-
-                    "sub        x4, x4, x5",
-                    "cmp        x1, #0",
-                    "ble        2f",
-
-                    "1:",
-                    "ldr        x6, [x3], #1",
-                    "str        x6, [x4]",
-                    "sub        x4, x4, #1",
-
-                    "subs       x1, x1, #1",
-                    "bne        1b",
-
-                    "2:",
-                    in("x0") num_vec,
-                    in("x1") remain,
-                    in("x2") &rev_tbl[0],
-                    in("x3") &self.yy[0],
-                    in("x4") &rotated.yy[self.width * self.height - 16],
-                );
-            }
-        }
-
-        let num_vec = (self.width * self.height / 2) >> 4;
-        let remain = (self.width * self.height / 2) - num_vec * 16;
-
-        if num_vec > 0 {
-            let rev_tbl: [u8; 16] = [14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1];
-            unsafe {
-                asm!(
-                    "ld1        {{v0.16b}}, [x2]",
-                    "mov        x5, #-16",
-
-                    "0:",
-                    "ld1        {{v1.16b}}, [x3], #16",
-                    "tbl        v2.16b, {{v1.16b}}, v0.16b",
-                    "st1        {{v2.16b}}, [x4], x5",
-                    "subs       x0, x0, #1",
-                    "bne        0b",
-
-                    "sub        x4, x4, x5",
-                    "cmp        x1, #0",
-                    "ble        2f",
-
-                    "1:",
-                    "ldrsw      x6, [x3], #2",
-                    "str        x6, [x4]",
-                    "sub        x4, x4, #2",
-
-                    "subs       x1, x1, #1",
-                    "bne        1b",
-
-                    "2:",
-                    in("x0") num_vec,
-                    in("x1") remain,
-                    in("x2") &rev_tbl[0],
-                    in("x3") &self.uv[0],
-                    in("x4") &rotated.uv[(self.width * self.height / 2) - 16],
-                );
-            }
-        }
         match rot {
-            180 => Ok(rotated),
+            180 => {
+                let num_vec = (self.width * self.height) >> 4;
+                let remain = self.width * self.height - num_vec * 16;
+
+                if num_vec > 0 {
+                    let rev_tbl: [u8; 16] = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+                    unsafe {
+                        asm!(
+                            "ld1        {{v0.16b}}, [x2]",
+                            "mov        x5, #-16",
+
+                            "0:",
+                            "ld1        {{v1.16b}}, [x3], #16",
+                            "tbl        v2.16b, {{v1.16b}}, v0.16b",
+                            "st1        {{v2.16b}}, [x4], x5",
+                            "subs       x0, x0, #1",
+                            "bne        0b",
+
+                            "sub        x4, x4, x5",
+                            "cmp        x1, #0",
+                            "ble        2f",
+
+                            "1:",
+                            "ldr        x6, [x3], #1",
+                            "str        x6, [x4]",
+                            "sub        x4, x4, #1",
+
+                            "subs       x1, x1, #1",
+                            "bne        1b",
+
+                            "2:",
+                            in("x0") num_vec,
+                            in("x1") remain,
+                            in("x2") &rev_tbl[0],
+                            in("x3") &self.yy[0],
+                            in("x4") &rotated.yy[self.width * self.height - 16],
+                        );
+                    }
+                }
+
+                let num_vec = (self.width * self.height / 2) >> 4;
+                let remain = (self.width * self.height / 2) - num_vec * 16;
+
+                if num_vec > 0 {
+                    let rev_tbl: [u8; 16] = [14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1];
+                    unsafe {
+                        asm!(
+                            "ld1        {{v0.16b}}, [x2]",
+                            "mov        x5, #-16",
+
+                            "0:",
+                            "ld1        {{v1.16b}}, [x3], #16",
+                            "tbl        v2.16b, {{v1.16b}}, v0.16b",
+                            "st1        {{v2.16b}}, [x4], x5",
+                            "subs       x0, x0, #1",
+                            "bne        0b",
+
+                            "sub        x4, x4, x5",
+                            "cmp        x1, #0",
+                            "ble        2f",
+
+                            "1:",
+                            "ldrsw      x6, [x3], #2",
+                            "str        x6, [x4]",
+                            "sub        x4, x4, #2",
+
+                            "subs       x1, x1, #1",
+                            "bne        1b",
+
+                            "2:",
+                            in("x0") num_vec,
+                            in("x1") remain,
+                            in("x2") &rev_tbl[0],
+                            in("x3") &self.uv[0],
+                            in("x4") &rotated.uv[(self.width * self.height / 2) - 16],
+                        );
+                    }
+                }
+                Ok(rotated)
+            }
             _ => NV12Err!("Non supported rotation"),
         }
     }
