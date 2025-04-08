@@ -80,14 +80,17 @@ impl NV12 {
 
     #[cfg(not(feature = "neon"))]
     pub fn rot(&self, rot: i32) -> std::io::Result<NV12> {
+        let mut rotated = NV12 {
+            yy: vec![0u8; self.width * self.height],
+            uv: vec![0u8; self.width * self.height / 2],
+            width: 0,
+            height: 0,
+        };
+
         match rot {
             180 => {
-                let mut rotated = NV12 {
-                    yy: vec![0u8; self.width * self.height],
-                    uv: vec![0u8; self.width * self.height / 2],
-                    width: self.width,
-                    height: self.height,
-                };
+                rotated.width = self.width;
+                rotated.height = self.height;
 
                 rotated.yy.copy_from_slice(&self.yy[..]);
                 rotated.uv.copy_from_slice(&self.uv[..]);
@@ -99,12 +102,8 @@ impl NV12 {
             }
 
             90 | 270 => {
-                let mut rotated = NV12 {
-                    yy: vec![0u8; self.width * self.height],
-                    uv: vec![0u8; self.width * self.height / 2],
-                    width: self.height,
-                    height: self.width,
-                };
+                rotated.width = self.height;
+                rotated.height = self.width;
 
                 for y in 0..self.height {
                     for x in 0..self.width {
@@ -116,6 +115,7 @@ impl NV12 {
 
                 let (srcuv_width, srcuv_height, dstuv_width) =
                     (self.width / 2, self.height / 2, self.height / 2);
+
                 let (dst_uv16, src_uv16): (&mut [u16], &[u16]) = (
                     bytemuck::cast_slice_mut(&mut rotated.uv[..]),
                     bytemuck::cast_slice(&self.uv[..]),
@@ -223,6 +223,8 @@ impl NV12 {
                 }
                 Ok(rotated)
             }
+
+            90 => {}
             _ => NV12Err!("Non supported rotation"),
         }
     }
