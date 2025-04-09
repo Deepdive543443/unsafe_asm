@@ -224,7 +224,73 @@ impl NV12 {
                 Ok(rotated)
             }
 
-            90 => {}
+            90 => {
+                rotated.width = self.height;
+                rotated.height = self.width;
+                // Register usage:
+                
+
+                let tbl_v0: Vec<u8> = vec![57, 41, 25, 9, 56, 40, 24, 8, 49, 33, 17, 1, 48, 32, 16, 0];
+                let tbl_v4: Vec<u8> = vec![28, 29, 30, 31, 12, 13, 14, 15, 24, 25, 26, 27, 8, 9, 10, 11];
+                let tbl_v5: Vec<u8> = vec![20, 21, 22, 23, 4, 5, 6, 7, 16, 17, 18, 19, 0, 1, 2, 3];            
+
+                let num_vec: usize = self.width >> 4;
+                let remain: usize = self.width - num_vec * 16;
+
+                let (dst_x, dst_y) = rotated_coordinate(self.width, self.height, 0, 0, rot)?;
+
+                let (mut x, mut y): (usize, usize) = (0, 0);
+
+                unsafe {
+                    asm!(
+                        // Lookup table and others setup   [V0-V5]
+                        "ld1        {{v0.16b}}, [x2]",
+                        "dup        {v4.16b}, #2",
+                        "add        {v1.16b},{v0.16b},{v4.16b}",
+                        "add        {v2.16b},{v1.16b},{v4.16b}",
+                        "add        {v3.16b},{v2.16b},{v4.16b}",
+
+                        "ld1        {{v4.16b}}, [x3]",
+                        "ld1        {{v5.16b}}, [x4]",
+
+                        // Load Mat(16 x 8)     [V6-V13]
+                        "0:",                                   // Mat preload stage
+                        "sub        x1, x1, #8",
+                        "mov        x12, x1",                   // dst0
+
+                        "1:",
+                        "mov        x11, x0",
+
+                        "ld1        {{v6.16b}}, [x0], x7",
+
+
+                        // Lookup Rot stage 1   [V14-v21]
+
+                        // ORR Stage            [V6-V13]
+
+                        // Splited Lookup       [V14-V21]
+
+                        // Store
+
+                        // Register usage:
+                        // 
+                        // X0 src_ptr, X1 dst_ptr X2-4 Lookup table addr, X5 num_vec, X6 remain, X7 src_w(dst_h), X8 src_h(dst_w)
+                        // X9 x, X10 y
+                        in("x0") &self.yy[0],                                   // X11 src0
+                        in("x1") &rotated.yy[dst_y * rotated.width + dst_x],    // X12 dst0
+                        in("x2") &tbl_v0[0],
+                        in("x3") &tbl_v4[0],
+                        in("x4") &tbl_v5[0],
+
+                        in("x5") num_vec,   // X13 nn
+                        in("x6") remain,    // X14 rr
+                        in("x7") &self.width,
+                        in("x8") &self.height,
+                        inout("x9") x,
+                        inout("x10") y,  
+                    );
+                }
+            }
             _ => NV12Err!("Non supported rotation"),
         }
     }
