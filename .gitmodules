@@ -1,0 +1,3 @@
+[submodule "Others/Matter-Setup-Payload-Rust"]
+	path = Others/Matter-Setup-Payload-Rust
+	url = https://github.com/Deepdive543443/Matter-Setup-Payload-Rust
