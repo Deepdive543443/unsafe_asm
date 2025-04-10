@@ -135,15 +135,15 @@ impl NV12 {
 
     #[cfg(feature = "neon")]
     pub fn rot(&self, rot: i32) -> std::io::Result<NV12> {
-        let rotated = NV12 {
-            yy: vec![0u8; self.width * self.height],
-            uv: vec![0u8; self.width * self.height / 2],
-            width: self.width,
-            height: self.height,
-        };
-
         match rot {
             180 => {
+                let rotated = NV12 {
+                    yy: vec![0u8; self.width * self.height],
+                    uv: vec![0u8; self.width * self.height / 2],
+                    width: self.width,
+                    height: self.height,
+                };
+
                 let num_vec = (self.width * self.height) >> 4;
                 let remain = self.width * self.height - num_vec * 16;
 
@@ -225,10 +225,13 @@ impl NV12 {
             }
 
             90 => {
-                rotated.width = self.height;
-                rotated.height = self.width;
-                // Register usage:
-                
+                let rotated = NV12 {
+                    yy: vec![0u8; self.width * self.height],
+                    uv: vec![0u8; self.width * self.height / 2],
+                    width: self.width,
+                    height: self.height,
+                };
+
 
                 let tbl_v0: Vec<u8> = vec![57, 41, 25, 9, 56, 40, 24, 8, 49, 33, 17, 1, 48, 32, 16, 0];
                 let tbl_v4: Vec<u8> = vec![28, 29, 30, 31, 12, 13, 14, 15, 24, 25, 26, 27, 8, 9, 10, 11];
@@ -245,10 +248,11 @@ impl NV12 {
                     asm!(
                         // Lookup table and others setup   [V0-V5]
                         "ld1        {{v0.16b}}, [x2]",
-                        "dup        {v4.16b}, #2",
-                        "add        {v1.16b},{v0.16b},{v4.16b}",
-                        "add        {v2.16b},{v1.16b},{v4.16b}",
-                        "add        {v3.16b},{v2.16b},{v4.16b}",
+                        "mov        w18, #2",
+                        "dup        v4.16b, w18",
+                        "add        v1.16b, v0.16b, v4.16b",
+                        "add        v2.16b, v1.16b, v4.16b",
+                        "add        v3.16b, v2.16b, v4.16b",
 
                         "ld1        {{v4.16b}}, [x3]",
                         "ld1        {{v5.16b}}, [x4]",
@@ -289,7 +293,8 @@ impl NV12 {
                         inout("x9") x,
                         inout("x10") y,  
                     );
-                }
+                };
+                Ok(rotated)
             }
             _ => NV12Err!("Non supported rotation"),
         }
