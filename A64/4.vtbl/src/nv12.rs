@@ -244,6 +244,7 @@ impl NV12 {
 
                 let (mut x, mut y): (usize, usize) = (0, 0);
 
+                println!("{:?}", &self.yy[0..16 * 8]);
                 unsafe {
                     asm!(
                         // Lookup table and others setup   [V0-V5]
@@ -257,24 +258,80 @@ impl NV12 {
                         "ld1        {{v4.16b}}, [x3]",
                         "ld1        {{v5.16b}}, [x4]",
 
-                        // Load Mat(16 x 8)     [V6-V13]
-                        "0:",                                   // Mat preload stage
-                        "sub        x1, x1, #8",
+                        // Mat preload stage
+                        "0:",
+                        "sub        x1, x1, #8",                // dst_ptr -= 8
                         "mov        x12, x1",                   // dst0
 
                         "1:",
+                        "mov        x13, x5",
+                        "mov        x14, x6",
                         "mov        x11, x0",
 
-                        "ld1        {{v6.16b}}, [x0], x7",
+                        "2:",       // Mat Rotation stage
+                        "ld1        {{v6.16b}}, [x11], x7",
+                        "ld1        {{v7.16b}}, [x11], x7",
+                        "ld1        {{v8.16b}}, [x11], x7",
+                        "ld1        {{v9.16b}}, [x11], x7",
+                        "ld1        {{v10.16b}}, [x11], x7",
+                        "ld1        {{v11.16b}}, [x11], x7",
+                        "ld1        {{v12.16b}}, [x11], x7",
+                        "ld1        {{v13.16b}}, [x11], x7",
+
+                        "tbl        v14.16b, {{v6.16b, v7.16b, v8.16b, v9.16b}}, v0.16b",
+                        "tbl        v15.16b, {{v6.16b, v7.16b, v8.16b, v9.16b}}, v1.16b",
+                        "tbl        v16.16b, {{v6.16b, v7.16b, v8.16b, v9.16b}}, v2.16b",
+                        "tbl        v17.16b, {{v6.16b, v7.16b, v8.16b, v9.16b}}, v3.16b",
+                        "tbl        v18.16b, {{v10.16b, v11.16b, v12.16b, v13.16b}}, v0.16b",
+                        "tbl        v19.16b, {{v10.16b, v11.16b, v12.16b, v13.16b}}, v1.16b",
+                        "tbl        v20.16b, {{v10.16b, v11.16b, v12.16b, v13.16b}}, v2.16b",
+                        "tbl        v21.16b, {{v10.16b, v11.16b, v12.16b, v13.16b}}, v3.16b",
+
+                        "orr        v6.16b, v14.16b, v14.16b",
+                        "orr        v7.16b, v18.16b, v18.16b",
+                        "orr        v8.16b, v15.16b, v15.16b",
+                        "orr        v9.16b, v19.16b, v19.16b",
+                        "orr        v10.16b, v16.16b, v16.16b",
+                        "orr        v11.16b, v20.16b, v20.16b",
+                        "orr        v12.16b, v17.16b, v17.16b",
+                        "orr        v13.16b, v21.16b, v21.16b",
+
+                        "tbl        v14.16b, {{v6.16b, v7.16b}}, v4.16b",
+                        "tbl        v18.16b, {{v6.16b, v7.16b}}, v5.16b",
+                        "tbl        v15.16b, {{v8.16b, v9.16b}}, v4.16b",
+                        "tbl        v19.16b, {{v8.16b, v9.16b}}, v5.16b",
+                        "tbl        v16.16b, {{v10.16b, v11.16b}}, v4.16b",
+                        "tbl        v20.16b, {{v10.16b, v11.16b}}, v5.16b",
+                        "tbl        v17.16b, {{v12.16b, v13.16b}}, v4.16b",
+                        "tbl        v21.16b, {{v12.16b, v13.16b}}, v5.16b",
+
+                        "st1        {{v14.d}}[0], [x12], x8",   // += dst_w
+                        "st1        {{v14.d}}[1], [x12], x8",
+                        "st1        {{v15.d}}[0], [x12], x8",
+                        "st1        {{v15.d}}[1], [x12], x8",
+                        "st1        {{v16.d}}[0], [x12], x8",
+                        "st1        {{v16.d}}[1], [x12], x8",
+                        "st1        {{v17.d}}[0], [x12], x8",
+                        "st1        {{v17.d}}[1], [x12], x8",
+                        "st1        {{v18.d}}[0], [x12], x8",
+                        "st1        {{v18.d}}[1], [x12], x8",
+                        "st1        {{v19.d}}[0], [x12], x8",
+                        "st1        {{v19.d}}[1], [x12], x8",
+                        "st1        {{v20.d}}[0], [x12], x8",
+                        "st1        {{v20.d}}[1], [x12], x8",
+                        "st1        {{v21.d}}[0], [x12], x8",
+                        "st1        {{v21.d}}[1], [x12], x8",
+
+                        "subs       x13, x13, #1",
+                        "bne        2b",
+
+                        // "3:",
+                        // "subs       x14, x14, #1",
+                        // "bne        3b",
+
+                        
 
 
-                        // Lookup Rot stage 1   [V14-v21]
-
-                        // ORR Stage            [V6-V13]
-
-                        // Splited Lookup       [V14-V21]
-
-                        // Store
 
                         // Register usage:
                         // 
@@ -288,12 +345,20 @@ impl NV12 {
 
                         in("x5") num_vec,   // X13 nn
                         in("x6") remain,    // X14 rr
-                        in("x7") &self.width,
-                        in("x8") &self.height,
+                        in("x7") self.width,
+                        in("x8") self.height,
                         inout("x9") x,
-                        inout("x10") y,  
+                        inout("x10") y,
+
+                        out("x11") _,
+                        out("x12") _,
+                        out("x13") _,
+                        out("x14") _,
+                        out("x18") _,       // This is required
                     );
                 };
+
+                println!("{:?}", &self.yy[0..16 * 8]);
                 Ok(rotated)
             }
             _ => NV12Err!("Non supported rotation"),
