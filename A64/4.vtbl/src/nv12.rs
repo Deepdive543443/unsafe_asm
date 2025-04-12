@@ -150,33 +150,32 @@ impl NV12 {
             unsafe {
                 asm!(
                     "ld1        {{v0.16b}}, [x2]",
-                    "mov        x5, #-16",
+                    "mov        x2, #-16",
 
                     "0:",
                     "ld1        {{v1.16b}}, [x3], #16",
                     "tbl        v2.16b, {{v1.16b}}, v0.16b",
-                    "st1        {{v2.16b}}, [x4], x5",
+                    "st1        {{v2.16b}}, [x4], x2",
                     "subs       x0, x0, #1",
                     "bne        0b",
 
-                    "sub        x4, x4, x5",
+                    "add        x4, x4, #15",
+                    "mov        x2, #-1",
                     "cmp        x1, #0",
                     "ble        2f",
 
                     "1:",
-                    "ldr        x6, [x3], #1",
-                    "str        x6, [x4]",
-                    "sub        x4, x4, #1",
-
+                    "ld1        {{v2.b}}[0], [x3], #1",
+                    "st1        {{v2.b}}[0], [x4], x2",
                     "subs       x1, x1, #1",
                     "bne        1b",
 
                     "2:",
-                    in("x0") num_vec,
-                    in("x1") remain,
-                    in("x2") &rev_tbl[0],
-                    in("x3") &self.yy[0],
-                    in("x4") &rotated.yy[self.width * self.height - 16],
+                    inout("x0") num_vec => _,
+                    inout("x1") remain  => _,
+                    inout("x2") &rev_tbl[0] => _,   // offset
+                    inout("x3") &self.yy[0] => _,  
+                    inout("x4") &rotated.yy[self.width * self.height - 16] => _,
                 );
             }
         }
@@ -189,33 +188,32 @@ impl NV12 {
             unsafe {
                 asm!(
                     "ld1        {{v0.16b}}, [x2]",
-                    "mov        x5, #-16",
+                    "mov        x2, #-16",
 
                     "0:",
                     "ld1        {{v1.16b}}, [x3], #16",
                     "tbl        v2.16b, {{v1.16b}}, v0.16b",
-                    "st1        {{v2.16b}}, [x4], x5",
+                    "st1        {{v2.16b}}, [x4], x2",
                     "subs       x0, x0, #1",
                     "bne        0b",
 
-                    "sub        x4, x4, x5",
+                    "add        x4, x4, #14",
+                    "mov        x2, #-2",
                     "cmp        x1, #0",
                     "ble        2f",
 
                     "1:",
-                    "ldrsw      x6, [x3], #2",
-                    "str        x6, [x4]",
-                    "sub        x4, x4, #2",
-
+                    "ld1        {{v2.h}}[0], [x3], #2",
+                    "st1        {{v2.h}}[0], [x4], x2",
                     "subs       x1, x1, #1",
                     "bne        1b",
 
                     "2:",
-                    in("x0") num_vec,
-                    in("x1") remain,
-                    in("x2") &rev_tbl[0],
-                    in("x3") &self.uv[0],
-                    in("x4") &rotated.uv[(self.width * self.height / 2) - 16],
+                    inout("x0") num_vec => _,
+                    inout("x1") remain => _,
+                    inout("x2") &rev_tbl[0] => _,   // offset
+                    inout("x3") &self.uv[0] => _,
+                    inout("x4") &rotated.uv[(self.width * self.height / 2) - 16] => _,
                 );
             }
         }
