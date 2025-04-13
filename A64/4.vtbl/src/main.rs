@@ -23,19 +23,23 @@ fn print_nv12(nv12: &nv12::NV12) {
     }
 }
 
+const WIDTH: usize = 18;
+const HEIGHT: usize = 10;
+const SIZE: usize = WIDTH * HEIGHT;
+
 fn main() -> std::io::Result<()> {
     let mut obj = nv12::NV12 {
-        yy: vec![0u8; 18 * 10],
-        uv: vec![0u8; 18 * 10 / 2],
-        width: 18,
-        height: 10,
+        yy: vec![0u8; SIZE],
+        uv: vec![0u8; SIZE / 2],
+        width: WIDTH,
+        height: HEIGHT,
     };
 
-    for i in 0..18 * 10 {
+    for i in 0..SIZE {
         obj.yy[i] = i as u8;
     }
 
-    for i in 0..18 * 10 / 2 {
+    for i in 0..SIZE / 2 {
         obj.uv[i] = i as u8;
     }
 
