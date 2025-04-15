@@ -236,8 +236,6 @@ impl NV12 {
                 };
 
                 let num_lane = self.height >> 3;
-                let num_mat = self.width >> 4;
-                let num_vec = self.width - (16 * num_mat);
 
                 let mut y: usize = 0;
                 if num_lane > 0 {
@@ -247,6 +245,8 @@ impl NV12 {
                         [20, 21, 22, 23, 4, 5, 6, 7, 16, 17, 18, 19, 0, 1, 2, 3],
                     );
                     let (dst_x, dst_y) = rotated_coordinate(self.width, self.height, 0, 0, rot)?;
+                    let num_mat = self.width >> 4;
+                    let num_vec = self.width - (16 * num_mat);
 
                     unsafe {
                         asm!(
@@ -436,8 +436,6 @@ impl NV12 {
                 };
 
                 let num_lane = self.height >> 3;
-                let num_mat = self.width >> 4;
-                let num_vec = self.width - (16 * num_mat);
 
                 let mut y: usize = 0;
                 if num_lane > 0 {
@@ -447,6 +445,8 @@ impl NV12 {
                         [8, 9, 10, 11, 24, 25, 26, 27, 12, 13, 14, 15, 28, 29, 30, 31],
                     );
                     let (dst_x, dst_y) = rotated_coordinate(self.width, self.height, 0, 0, rot)?;
+                    let num_mat = self.width >> 4;
+                    let num_vec = self.width - (16 * num_mat);
 
                     unsafe {
                         asm!(
@@ -582,8 +582,7 @@ impl NV12 {
                             out("v18") _,
                             out("v19") _,
                             out("v20") _,
-                            out("v21") _,   // This is required to inform assembler which Register was used.
-                                            // Otherwise Rust mess up the origin value in Register, led to undefined behaviour
+                            out("v21") _,
                         );
                     }
                 }
