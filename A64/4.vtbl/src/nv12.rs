@@ -443,14 +443,13 @@ impl NV12 {
                 if num_lane > 0 {
                     let (tbl_v0, tbl_v4, tbl_v5): ([u8; 16], [u8; 16], [u8; 16]) = (
                         [15, 31, 47, 63, 14, 30, 46, 62, 7, 23, 39, 55, 6, 22, 38, 54],
-                        [0, 1, 2, 3, 24, 25, 26, 27, 4, 5, 6, 7, 28, 29, 30, 31],
-                        [8, 9, 10, 11, 16, 17, 18, 19, 12, 13, 14, 15, 20, 21, 22, 23],
+                        [0, 1, 2, 3, 16, 17, 18, 19, 4, 5, 6, 7, 20, 21, 22, 23],
+                        [8, 9, 10, 11, 24, 25, 26, 27, 12, 13, 14, 15, 28, 29, 30, 31],
                     );
                     let (dst_x, dst_y) = rotated_coordinate(self.width, self.height, 0, 0, rot)?;
 
                     unsafe {
                         asm!(
-                            // Lookup table and others setup   [V0-V5]
                             "ld1        {{v0.16b}}, [x2]",
                             "mov        w2, #2",
                             "dup        v4.16b, w2",
@@ -459,27 +458,19 @@ impl NV12 {
                             "sub        v3.16b, v2.16b, v4.16b",
                             "ld1        {{v4.16b}}, [x3]",
                             "ld1        {{v5.16b}}, [x4]",
-
                             "mov        x2, #-1",
-                            "mul        x9, x9, x2",               // x9 = -x9
-
-                            "mov        x2, x5",                   // nl
-
+                            "mul        x9, x9, x2",
+                            "mov        x2, x5",
                             "mov        x13, #7",
-                            "mul        x13, x13, x8",              // 7 * src_w
-
+                            "mul        x13, x13, x8",
                             "0:",
-                            "mov        x12, x1",                   // dst0
-
+                            "mov        x12, x1",
                             "cmp        x6, #0",
-                            "ble        3f",                        // Jmp to vec
-
-                            // Mat Rotation preload
+                            "ble        3f",
                             "1:",
-                            "mov        x3, x6",                   // nm
-
+                            "mov        x3, x6",
                             "2:",
-                            "mov        x11, x0",                   // src0 = src_ptr
+                            "mov        x11, x0",
                             "ld1        {{v6.16b}}, [x11], x8",
                             "ld1        {{v7.16b}}, [x11], x8",
                             "ld1        {{v8.16b}}, [x11], x8",
@@ -487,8 +478,7 @@ impl NV12 {
                             "ld1        {{v10.16b}}, [x11], x8",
                             "ld1        {{v11.16b}}, [x11], x8",
                             "ld1        {{v12.16b}}, [x11], x8",
-                            "ld1        {{v13.16b}}, [x11], x8",     // src0 += 8 * src_W
-
+                            "ld1        {{v13.16b}}, [x11], x8",
                             "tbl        v14.16b, {{v6.16b, v7.16b, v8.16b, v9.16b}}, v0.16b",
                             "tbl        v15.16b, {{v6.16b, v7.16b, v8.16b, v9.16b}}, v1.16b",
                             "tbl        v16.16b, {{v6.16b, v7.16b, v8.16b, v9.16b}}, v2.16b",
@@ -513,8 +503,7 @@ impl NV12 {
                             "tbl        v20.16b, {{v10.16b, v11.16b}}, v5.16b",
                             "tbl        v17.16b, {{v12.16b, v13.16b}}, v4.16b",
                             "tbl        v21.16b, {{v12.16b, v13.16b}}, v5.16b",
-
-                            "st1        {{v21.d}}[1], [x12], x9",   // += 16 * dst_w
+                            "st1        {{v21.d}}[1], [x12], x9",
                             "st1        {{v21.d}}[0], [x12], x9",
                             "st1        {{v20.d}}[1], [x12], x9",
                             "st1        {{v20.d}}[0], [x12], x9",
@@ -530,20 +519,15 @@ impl NV12 {
                             "st1        {{v15.d}}[0], [x12], x9",
                             "st1        {{v14.d}}[1], [x12], x9",
                             "st1        {{v14.d}}[0], [x12], x9",
-
-                            "add        x0, x0, #16",               // src_ptr += 16
-                            "subs       x3, x3, #1",                // nm--
-                            "bne        2b",                        // Mat Rotation end
-
+                            "add        x0, x0, #16",
+                            "subs       x3, x3, #1",
+                            "bne        2b",
                             "cmp        x7, #0",
-                            "ble        5f",                        // Jmp to next lane
-
-                            // vec
+                            "ble        5f",
                             "3:",
-                            "mov        x4, x7",                    // nv
-
+                            "mov        x4, x7",
                             "4:",
-                            "mov        x11, x0",                   // src0 = src_ptr
+                            "mov        x11, x0",
                             "ld1        {{v6.b}}[0], [x11], x8",
                             "ld1        {{v6.b}}[1], [x11], x8",
                             "ld1        {{v6.b}}[2], [x11], x8",
@@ -553,32 +537,29 @@ impl NV12 {
                             "ld1        {{v6.b}}[6], [x11], x8",
                             "ld1        {{v6.b}}[7], [x11], x8",
                             "st1        {{v6.d}}[0], [x12], x9",
-
-                            "add        x0, x0, #1",                // src_ptr++
-                            "subs       x4, x4, #1",                // nv--
+                            "add        x0, x0, #1",
+                            "subs       x4, x4, #1",
                             "bne        4b",
-
-                            // Next lane?
                             "5:",
-                            "add        x10, x10, #8",              // y += 8
-                            "add        x0, x0, x13",               // src_ptr += 7 * src_w
-                            "add        x1, x1, #8",                // dst_ptr += 8
-                            "subs       x2, x2, #1",                // nl--
+                            "add        x10, x10, #8",
+                            "add        x0, x0, x13",
+                            "add        x1, x1, #8",
+                            "subs       x2, x2, #1",
                             "bne        0b",
                             inout("x0") &self.yy[0] => _,
                             inout("x1") &rotated.yy[dst_y * rotated.width + dst_x] => _,
-                            inout("x2") &tbl_v0[0] => _,    //  nl
-                            inout("x3") &tbl_v4[0] => _,    //  nm
-                            inout("x4") &tbl_v5[0] => _,    //  nv
+                            inout("x2") &tbl_v0[0] => _,
+                            inout("x3") &tbl_v4[0] => _,
+                            inout("x4") &tbl_v5[0] => _,
                             inout("x5") num_lane => _,
                             inout("x6") num_mat => _,
                             inout("x7") num_vec => _,
-                            inout("x8") self.width => _,    // dst_h
-                            inout("x9") self.height => _,   // dst_w
+                            inout("x8") self.width => _,
+                            inout("x9") self.height => _,
                             inout("x10") y,
-                            out("x11") _,   //  src0
-                            out("x12") _,   //  dst0
-                            out("x13") _,   //  7 * src_ptr
+                            out("x11") _,
+                            out("x12") _,
+                            out("x13") _,
 
                             out("v0") _,
                             out("v1") _,
