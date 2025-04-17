@@ -6,52 +6,7 @@ mod nv12;
 const NV12_WIDTH: usize = 1536;
 const NV12_HEIGHT: usize = 1022;
 
-fn print_nv12(nv12: &nv12::NV12) {
-    println!("YY:");
-    for h in 0..nv12.height {
-        for w in 0..nv12.width {
-            print!("{:4}", nv12.yy[h * nv12.width + w]);
-        }
-        println!("");
-    }
-    println!("UV:");
-    for h in 0..nv12.height / 2 {
-        for w in 0..nv12.width {
-            print!("{:4}", nv12.uv[h * nv12.width + w]);
-        }
-        println!("");
-    }
-}
-
-const WIDTH: usize = 18;
-const HEIGHT: usize = 10;
-const SIZE: usize = WIDTH * HEIGHT;
-
 fn main() -> std::io::Result<()> {
-    let mut obj = nv12::NV12 {
-        yy: vec![0u8; SIZE],
-        uv: vec![0u8; SIZE / 2],
-        width: WIDTH,
-        height: HEIGHT,
-    };
-
-    for i in 0..SIZE {
-        obj.yy[i] = i as u8;
-    }
-
-    for i in 0..SIZE / 2 {
-        obj.uv[i] = i as u8;
-    }
-
-    println!("\r\nsrc");
-    print_nv12(&obj);
-    println!("\r\n90");
-    print_nv12(&obj.rot(90)?);
-    println!("\r\n180");
-    print_nv12(&obj.rot(180)?);
-    println!("\r\n270");
-    print_nv12(&obj.rot(270)?);
-
     let args: Vec<String> = env::args().collect();
     let nv12_src = nv12::new(args[1].clone(), NV12_WIDTH, NV12_HEIGHT)?;
 

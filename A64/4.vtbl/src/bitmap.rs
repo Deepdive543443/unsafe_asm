@@ -99,22 +99,20 @@ impl BMP {
 
     pub fn save(self, filename: &str) -> std::io::Result<()> {
         let mut bitmap_file = File::create(format!("{}.bmp", filename))?;
-
-        let file_header_bytes = unsafe {
-            std::mem::transmute::<WINBMPFILEHEADER, [u8; mem::size_of::<WINBMPFILEHEADER>()]>(
-                self.file_header,
+        let (file_header_bytes, bitmap_header_bytes) = unsafe {
+            (
+                std::mem::transmute::<WINBMPFILEHEADER, [u8; mem::size_of::<WINBMPFILEHEADER>()]>(
+                    self.file_header,
+                ),
+                std::mem::transmute::<WINNTBITMAPHEADER, [u8; mem::size_of::<WINNTBITMAPHEADER>()]>(
+                    self.bitmap_header,
+                ),
             )
         };
+
         bitmap_file.write_all(&file_header_bytes)?;
-
-        let bitmap_header_bytes = unsafe {
-            std::mem::transmute::<WINNTBITMAPHEADER, [u8; mem::size_of::<WINNTBITMAPHEADER>()]>(
-                self.bitmap_header,
-            )
-        };
         bitmap_file.write_all(&bitmap_header_bytes)?;
         bitmap_file.write_all(self.data.as_slice())?;
-
         Ok(())
     }
 }
