@@ -99,22 +99,20 @@ impl NV12 {
                     if num_vec > 0 {
                         unsafe {
                             asm!(
-                                "ld1        {{v0.16b}}, [x2]",
-                                "mov        x2, #-16",
+                                "ld1        {{v0.16b}}, [x1]",
+                                "mov        x1, #-16",
 
                                 "0:",
-                                "prfm       pldl1keep, [x3, #128]",
-                                "ld1        {{v1.16b}}, [x3], #16",
+                                "prfm       pldl1keep, [x2, #128]",
+                                "ld1        {{v1.16b}}, [x2], #16",
                                 "tbl        v2.16b, {{v1.16b}}, v0.16b",
-                                "st1        {{v2.16b}}, [x4], x2",
+                                "st1        {{v2.16b}}, [x3], x1",
                                 "subs       x0, x0, #1",
                                 "bne        0b",
-
                                 inout("x0") num_vec => _,
-                                inout("x1") _remain  => _,
-                                inout("x2") &rev_tbl[0] => _,   // offset
-                                inout("x3") &self.yy[0] => _,
-                                inout("x4") &rotated.yy[self.width * self.height - 16] => _,
+                                inout("x1") &rev_tbl[0] => _,   // offset
+                                inout("x2") &self.yy[0] => _,
+                                inout("x3") &rotated.yy[self.width * self.height - 16] => _,
                                 out("v0") _,
                                 out("v1") _,
                                 out("v2") _,
@@ -123,7 +121,8 @@ impl NV12 {
                     }
                 }
 
-                rotated.yy[.._remain].copy_from_slice(&self.yy[(self.width * self.height - _remain)..]);
+                rotated.yy[.._remain]
+                    .copy_from_slice(&self.yy[(self.width * self.height - _remain)..]);
                 rotated.yy[.._remain].reverse();
 
                 _remain = self.width * self.height / 2;
@@ -136,21 +135,20 @@ impl NV12 {
                     if num_vec > 0 {
                         unsafe {
                             asm!(
-                                "ld1        {{v0.16b}}, [x2]",
-                                "mov        x2, #-16",
+                                "ld1        {{v0.16b}}, [x1]",
+                                "mov        x1, #-16",
 
                                 "0:",
-                                "prfm       pldl1keep, [x3, #128]",
-                                "ld1        {{v1.16b}}, [x3], #16",
+                                "prfm       pldl1keep, [x2, #128]",
+                                "ld1        {{v1.16b}}, [x2], #16",
                                 "tbl        v2.16b, {{v1.16b}}, v0.16b",
-                                "st1        {{v2.16b}}, [x4], x2",
+                                "st1        {{v2.16b}}, [x3], x1",
                                 "subs       x0, x0, #1",
                                 "bne        0b",
                                 inout("x0") num_vec => _,
-                                inout("x1") _remain => _,
-                                inout("x2") &rev_tbl[0] => _,   // offset
-                                inout("x3") &self.uv[0] => _,
-                                inout("x4") &rotated.uv[(self.width * self.height / 2) - 16] => _,
+                                inout("x1") &rev_tbl[0] => _,   // offset
+                                inout("x2") &self.uv[0] => _,
+                                inout("x3") &rotated.uv[(self.width * self.height / 2) - 16] => _,
                                 out("v0") _,
                                 out("v1") _,
                                 out("v2") _,
@@ -159,7 +157,8 @@ impl NV12 {
                     }
                 }
 
-                rotated.uv[.._remain].copy_from_slice(&self.uv[(self.width * self.height / 2 - _remain)..]);
+                rotated.uv[.._remain]
+                    .copy_from_slice(&self.uv[(self.width * self.height / 2 - _remain)..]);
                 let u16_buffer: &mut [u16] = bytemuck::cast_slice_mut(&mut rotated.uv[..]);
                 u16_buffer[..(_remain / 2)].reverse();
                 Ok(rotated)
