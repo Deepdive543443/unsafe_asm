@@ -90,7 +90,39 @@ impl NV12 {
 
                 let mut _remain = self.width * self.height;
 
-                #[cfg(feature = "neon")]
+                #[cfg(all(feature = "neon", target_arch = "arm"))]
+                {
+                    let num_vec = (self.width * self.height) >> 3;
+                    let rev_tbl: [u8; 8] = [7, 6, 5, 4, 3, 2, 1, 0];
+
+                    _remain = self.width * self.height - num_vec * 8;
+                    if num_vec > 0 {
+                        unsafe {
+                            asm!(
+                                "vld1.8     {{d0}}, [r2]",
+                                "mov        r2, #-8",
+                                "mov        r1, #8",
+                                "0:",
+                                "pld        [r3, #64]",
+                                "vld1.8     d1, [r3], r1",
+                                "vtbl.8     d2, {{d1}}, d0",
+                                "vst1.8     d2, [r4], r2",
+                                "subs       r0, r0, #1",
+                                "bne        0b",
+                                inout("r0") num_vec => _,
+                                out("r1") _,
+                                inout("r2") &rev_tbl[0] => _,   // offset
+                                inout("r3") &self.yy[0] => _,
+                                inout("r4") &rotated.yy[self.width * self.height - 8] => _,
+                                out("d0") _,
+                                out("d1") _,
+                                out("d2") _,
+                            );
+                        }
+                    }
+                }
+
+                #[cfg(all(feature = "neon", target_arch = "aarch64"))]
                 {
                     let num_vec = (self.width * self.height) >> 4;
                     let rev_tbl: [u8; 16] = [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
@@ -126,7 +158,40 @@ impl NV12 {
                 rotated.yy[.._remain].reverse();
 
                 _remain = self.width * self.height / 2;
-                #[cfg(feature = "neon")]
+
+                #[cfg(all(feature = "neon", target_arch = "arm"))]
+                {
+                    let num_vec = (self.width * self.height / 2) >> 3;
+                    let rev_tbl: [u8; 8] = [6, 7, 4, 5, 2, 3, 0, 1];
+
+                    _remain = (self.width * self.height / 4) - num_vec * 4;
+                    if num_vec > 0 {
+                        unsafe {
+                            asm!(
+                                "vld1.8     {{d0}}, [r2]",
+                                "mov        r2, #-8",
+                                "mov        r1, #8",
+                                "0:",
+                                "pld        [r3, #64]",
+                                "vld1.8     d1, [r3], r1",
+                                "vtbl.8     d2, {{d1}}, d0",
+                                "vst1.8     d2, [r4], r2",
+                                "subs       r0, r0, #1",
+                                "bne        0b",
+                                inout("r0") num_vec => _,
+                                out("r1") _,
+                                inout("r2") &rev_tbl[0] => _,   // offset
+                                inout("r3") &self.uv[0] => _,
+                                inout("r4") &rotated.uv[(self.width * self.height / 2) - 8] => _,
+                                out("d0") _,
+                                out("d1") _,
+                                out("d2") _,
+                            );
+                        }
+                    }
+                }
+
+                #[cfg(all(feature = "neon", target_arch = "aarch64"))]
                 {
                     let num_vec = (self.width * self.height / 2) >> 4;
                     let rev_tbl: [u8; 16] = [14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1];
@@ -173,7 +238,7 @@ impl NV12 {
 
                 let mut _y: usize = 0;
 
-                #[cfg(feature = "neon")]
+                #[cfg(all(feature = "neon", target_arch = "aarch64"))]
                 {
                     let num_lane = self.height >> 3;
                     if num_lane > 0 {
@@ -373,7 +438,7 @@ impl NV12 {
                 let dstuv_width = srcuv_height;
                 let mut _y: usize = 0;
 
-                #[cfg(feature = "neon")]
+                #[cfg(all(feature = "neon", target_arch = "aarch64"))]
                 {
                     let num_lane = srcuv_height >> 3;
                     if num_lane > 0 {
@@ -575,7 +640,7 @@ impl NV12 {
 
                 let mut _y: usize = 0;
 
-                #[cfg(feature = "neon")]
+                #[cfg(all(feature = "neon", target_arch = "aarch64"))]
                 {
                     let num_lane = self.height >> 3;
                     if num_lane > 0 {
@@ -759,7 +824,7 @@ impl NV12 {
 
                 let mut _y: usize = 0;
 
-                #[cfg(feature = "neon")]
+                #[cfg(all(feature = "neon", target_arch = "aarch64"))]
                 {
                     let num_lane = srcuv_height >> 3;
                     if num_lane > 0 {
