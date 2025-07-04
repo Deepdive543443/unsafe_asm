@@ -238,7 +238,178 @@ impl NV12 {
 
                 let mut _y: usize = 0;
 
-                #[cfg(all(feature = "neon", target_arch = "aarch64"))]
+                #[cfg(all(feature = "neon", target_arch = "arm"))] // 8 x 8
+                {
+                    let num_lane = self.height >> 3;
+                    if num_lane > 0 {
+                        let tbl_v: [u8; 24] = [
+                            28, 20, 12, 4, 24, 16, 8, 0, // tbl_v0
+                            12, 13, 14, 15, 4, 5, 6, 7, // tbl_v4
+                            8, 9, 10, 11, 0, 1, 2, 3, // tbl_v5
+                        ];
+
+                        let num_mat = self.width >> 3;
+                        let num_vec = self.width - (8 * num_mat);
+
+                        let (dst_x, dst_y) =
+                            rotated_coordinate(self.width, self.height, 0, 0, rot)?;
+
+                        let ctx: [u32; 3] = [num_lane as u32, num_mat as u32, num_vec as u32];
+
+                        unsafe {
+                            asm!(
+                                "vld1.u8    {{d0}}, [{3}]!",
+                                "vld1.u8    {{d4}}, [{3}]!",
+                                "vld1.u8    {{d5}}, [{3}]!",
+                                "mov        {3}, #1",
+                                "vdup.u8    d6, {3}",
+                                "vadd.u8    d1, d0, d6",
+                                "vadd.u8    d2, d1, d6",
+                                "vadd.u8    d3, d2, d6",    // d0-d5 vtbl
+
+                                "mov        {9}, #7",
+                                "mul        {9}, {9}, {4}", // 7 * src_w
+
+                                "0:",
+                                "mov        {8}, {1}",      // dst0
+
+                                "ldr        {3}, [{2}, #4]",// nm
+                                "cmp        {3}, #0",
+                                "ble        3f",            // Jmp to vec
+
+                                "2:",
+                                "mov        {7}, {0}",      // src0 = src_ptr
+                                "pld        [{7}, #64]",
+                                "vld1.u8    {{d6}}, [{7}], {4}",
+                                "pld        [{7}, #64]",
+                                "vld1.u8    {{d7}}, [{7}], {4}",
+                                "pld        [{7}, #64]",
+                                "vld1.u8    {{d8}}, [{7}], {4}",
+                                "pld        [{7}, #64]",
+                                "vld1.u8    {{d9}}, [{7}], {4}",
+                                "pld        [{7}, #64]",
+                                "vld1.u8    {{d10}}, [{7}], {4}",
+                                "pld        [{7}, #64]",
+                                "vld1.u8    {{d11}}, [{7}], {4}",
+                                "pld        [{7}, #64]",
+                                "vld1.u8    {{d12}}, [{7}], {4}",
+                                "pld        [{7}, #64]",
+                                "vld1.u8    {{d13}}, [{7}], {4}", // src0 += 8 * src_w
+
+                                "vtbl.8     d14, {{d6, d7, d8, d9}}, d0",
+                                "vtbl.8     d15, {{d6, d7, d8, d9}}, d1",
+                                "vtbl.8     d16, {{d6, d7, d8, d9}}, d2",
+                                "vtbl.8     d17, {{d6, d7, d8, d9}}, d3",
+                                "vtbl.8     d18, {{d10, d11, d12, d13}}, d0",
+                                "vtbl.8     d19, {{d10, d11, d12, d13}}, d1",
+                                "vtbl.8     d20, {{d10, d11, d12, d13}}, d2",
+                                "vtbl.8     d21, {{d10, d11, d12, d13}}, d3",
+                                "vorr       d6, d14, d14",
+                                "vorr       d7, d18, d18",
+                                "vorr       d8, d15, d15",
+                                "vorr       d9, d19, d19",
+                                "vorr       d10, d16, d16",
+                                "vorr       d11, d20, d20",
+                                "vorr       d12, d17, d17",
+                                "vorr       d13, d21, d21",
+                                "vtbl.8     d14, {{d6, d7}}, d4",
+                                "vtbl.8     d18, {{d6, d7}}, d5",
+                                "vtbl.8     d15, {{d8, d9}}, d4",
+                                "vtbl.8     d19, {{d8, d9}}, d5",
+                                "vtbl.8     d16, {{d10, d11}}, d4",
+                                "vtbl.8     d20, {{d10, d11}}, d5",
+                                "vtbl.8     d17, {{d12, d13}}, d4",
+                                "vtbl.8     d21, {{d12, d13}}, d5",
+
+                                "vst1.u8    d14, [{8}], {5}",
+                                "vst1.u8    d15, [{8}], {5}",
+                                "vst1.u8    d16, [{8}], {5}",
+                                "vst1.u8    d17, [{8}], {5}",
+                                "vst1.u8    d18, [{8}], {5}",
+                                "vst1.u8    d19, [{8}], {5}",
+                                "vst1.u8    d20, [{8}], {5}",
+                                "vst1.u8    d21, [{8}], {5}",   // += 8 * dst_w
+
+                                "add        {0}, {0}, #8",      // src_ptr += 8
+                                "subs       {3}, {3}, #1",      // nm--
+                                "bne        2b",                // Mat Rotation end
+
+                                "3:",
+                                "ldr        {3}, [{2}, #8]",    // nv
+                                "cmp        {3}, #0",
+                                "ble        5f",                // Jmp to vec
+
+                                "4:",
+                                "mov        {7}, {0}",      // src0 = src_ptr
+                                "pld        [{7}, #8]",
+                                "vld1.u8    {{d6[7]}}, [{7}], {4}",
+                                "pld        [{7}, #8]",
+                                "vld1.u8    {{d6[6]}}, [{7}], {4}",
+                                "pld        [{7}, #8]",
+                                "vld1.u8    {{d6[5]}}, [{7}], {4}",
+                                "pld        [{7}, #8]",
+                                "vld1.u8    {{d6[4]}}, [{7}], {4}",
+                                "pld        [{7}, #8]",
+                                "vld1.u8    {{d6[3]}}, [{7}], {4}",
+                                "pld        [{7}, #8]",
+                                "vld1.u8    {{d6[2]}}, [{7}], {4}",
+                                "pld        [{7}, #8]",
+                                "vld1.u8    {{d6[1]}}, [{7}], {4}",
+                                "pld        [{7}, #8]",
+                                "vld1.u8    {{d6[0]}}, [{7}], {4}",
+                                "vst1.u8    d6, [{8}], {5}",
+
+                                "add        {0}, {0}, #1",                // src_ptr++
+                                "subs       {3}, {3}, #1",                // nv--
+                                "bne        4b",
+
+                                "5:",
+                                "add        {6}, {6}, #8",
+                                "add        {0}, {0}, {9}",
+                                "sub        {1}, {1}, #8",
+
+                                "ldr        {3}, [{2}]",
+                                "subs       {3}, {3}, #1",  // nl--
+                                "str        {3}, [{2}]",
+                                "bne        0b",
+                                inout(reg) &self.yy[0] => _,                                    // 0
+                                inout(reg) &rotated.yy[dst_y * rotated.width + dst_x - 7] => _, // 1
+                                inout(reg) &ctx[0] => _,                                        // 2
+                                inout(reg) &tbl_v[0] => _,                                      // 3
+                                inout(reg) self.width => _,                                     // 4    // dst_h
+                                inout(reg) self.height => _,                                    // 5    // dst_w
+                                inout(reg) _y,                                                  // 6
+                                out(reg) _,                                                     // 7    //  src0
+                                out(reg) _,                                                     // 8    //  dst0
+                                out(reg) _,                                                     // 9    //  7 * src_ptr
+                                out("d0") _,
+                                out("d1") _,
+                                out("d2") _,
+                                out("d3") _,
+                                out("d4") _,
+                                out("d5") _,
+                                out("d6") _,
+                                out("d7") _,
+                                out("d8") _,
+                                out("d9") _,
+                                out("d10") _,
+                                out("d11") _,
+                                out("d12") _,
+                                out("d13") _,
+                                out("d14") _,
+                                out("d15") _,
+                                out("d16") _,
+                                out("d17") _,
+                                out("d18") _,
+                                out("d19") _,
+                                out("d20") _,
+                                out("d21") _,
+                            );
+                        }
+                    }
+                }
+
+                #[cfg(all(feature = "neon", target_arch = "aarch64"))] // 16 x 8
                 {
                     let num_lane = self.height >> 3;
                     if num_lane > 0 {
